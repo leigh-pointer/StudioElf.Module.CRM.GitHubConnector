@@ -1,0 +1,114 @@
+@namespace StudioElf.Module.CRM.GitHubConnector
+@using StudioElf.Module.CRM.Models
+@using StudioElf.Module.GitHubConnector.Client
+@using StudioElf.Module.GitHubConnector.Services
+@inherits GitHubConnectorBase
+@inject IGitHubKnowledgeGraphService KgService
+
+<div class="crm-tab">
+    <h5>GitHub Knowledge Graph</h5>
+
+    @if (_loading)
+    {
+        <p class="text-muted">Loading...</p>
+    }
+    else if (_graph == null || _graph.Nodes.Count == 0)
+    {
+        <p class="text-muted">No GitHub data linked to this contact.</p>
+    }
+    else
+    {
+        <p class="text-muted small">Repositories, issues, and releases linked to this contact.</p>
+
+        @foreach (var repoNode in _graph.Nodes.Where(n => n.Type == "Repository"))
+        {
+            var repoChildren = _graph.Edges
+                .Where(e => e.FromId == repoNode.Id)
+                .Select(e => e.ToId)
+                .ToList();
+
+            var issueNodes = _graph.Nodes.Where(n => repoChildren.Contains(n.Id) && n.Type is "Issue" or "PullRequest").ToList();
+            var releaseNodes = _graph.Nodes.Where(n => repoChildren.Contains(n.Id) && n.Type == "Release").ToList();
+
+            <div class="card mb-2">
+                <div class="card-header py-1">
+                    <strong>@repoNode.Name</strong>
+                    <span class="ms-2 badge bg-secondary">@repoNode.Properties.GetValueOrDefault("language", "")</span>
+                    @if (repoNode.Properties.TryGetValue("stars", out var stars) && stars is int s && s > 0)
+                    {
+                        <span class="ms-1 badge bg-warning text-dark">@s ⭐</span>
+                    }
+                </div>
+                <div class="card-body p-2">
+                    @if (issueNodes.Count > 0)
+                    {
+                        <h6 class="mb-1">Open Issues (@issueNodes.Count)</h6>
+                        <ul class="list-unstyled mb-2 small">
+                            @foreach (var issue in issueNodes.Take(5))
+                            {
+                                <li>
+                                    @if (issue.Properties.TryGetValue("url", out var url) && url is string u && !string.IsNullOrEmpty(u))
+                                    {
+                                        <a href="@u" target="_blank" rel="noopener">@issue.Name</a>
+                                    }
+                                    else
+                                    {
+                                        @issue.Name
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                    @if (releaseNodes.Count > 0)
+                    {
+                        <h6 class="mb-1">Recent Releases</h6>
+                        <ul class="list-unstyled mb-0 small">
+                            @foreach (var release in releaseNodes)
+                            {
+                                <li>
+                                    <code>@release.Name</code>
+                                    @if (release.Properties.TryGetValue("published", out var pub))
+                                    {
+                                        <span class="text-muted ms-1">@pub</span>
+                                    }
+                                    @if (release.Properties.TryGetValue("prerelease", out var pre) && pre is bool b && b)
+                                    {
+                                        <span class="badge bg-warning text-dark ms-1">Pre</span>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                    @if (issueNodes.Count == 0 && releaseNodes.Count == 0)
+                    {
+                        <p class="text-muted mb-0 small">No issues or releases.</p>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int ContactId { get; set; }
+
+    private KnowledgeGraph? _graph;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        try
+        {
+            _graph = await KgService.BuildAsync("contact", ContactId, ModuleState.ModuleId);
+        }
+        catch
+        {
+            _graph = null;
+        }
+        _loading = false;
+    }
+}
