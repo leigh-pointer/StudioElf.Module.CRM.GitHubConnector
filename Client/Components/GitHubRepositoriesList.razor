@@ -1,10 +1,8 @@
-@attribute [OqtaneIgnore]
 @namespace StudioElf.Module.CRM.GitHubConnector
-@using Oqtane.Shared
+@using StudioElf.Module.GitHubConnector.Client
 @using StudioElf.Module.GitHubConnector.Models
 @using StudioElf.Module.GitHubConnector.Services
-@using StudioElf.Module.CRM
-@inherits CrmBase
+@inherits GitHubConnectorBase
 @inject IGitHubRepositoryService RepositoryService
 
 @* Reusable component for displaying a list of GitHub repositories. *@

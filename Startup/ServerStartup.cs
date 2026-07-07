@@ -37,6 +37,13 @@ public class ServerStartup : IServerStartup
         // Business logic services
         services.AddScoped<IGitHubRepositoryService, GitHubRepositoryService>();
         services.AddScoped<IGitHubReleaseService, GitHubReleaseService>();
+        services.AddScoped<IGitHubIssueService, GitHubIssueService>();
+        services.AddScoped<IGitHubWebhookService, GitHubWebhookService>();
+        services.AddScoped<IGitHubTimelineService, GitHubTimelineService>();
+        services.AddScoped<IGitHubActionService, GitHubActionService>();
+        services.AddScoped<IGitHubDiscussionService, GitHubDiscussionService>();
+        services.AddScoped<IGitHubProjectService, GitHubProjectService>();
+        services.AddScoped<IGitHubAnalyticsService, GitHubAnalyticsService>();
         services.AddScoped<IGitHubSyncService, GitHubSyncService>();
 
         // Background sync job — auto-registers with Oqtane Job Scheduler

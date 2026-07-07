@@ -21,6 +21,12 @@ public class GitHubController : ModuleControllerBase
 {
     private readonly IGitHubRepositoryService _repositoryService;
     private readonly IGitHubReleaseService _releaseService;
+    private readonly IGitHubIssueService _issueService;
+    private readonly IGitHubWebhookService _webhookService;
+    private readonly IGitHubActionService _actionService;
+    private readonly IGitHubDiscussionService _discussionService;
+    private readonly IGitHubProjectService _projectService;
+    private readonly IGitHubAnalyticsService _analyticsService;
     private readonly IGitHubSyncService _syncService;
 
     /// <summary>
@@ -29,6 +35,12 @@ public class GitHubController : ModuleControllerBase
     public GitHubController(
         IGitHubRepositoryService repositoryService,
         IGitHubReleaseService releaseService,
+        IGitHubIssueService issueService,
+        IGitHubWebhookService webhookService,
+        IGitHubActionService actionService,
+        IGitHubDiscussionService discussionService,
+        IGitHubProjectService projectService,
+        IGitHubAnalyticsService analyticsService,
         IGitHubSyncService syncService,
         ILogManager logger,
         IHttpContextAccessor accessor)
@@ -36,6 +48,12 @@ public class GitHubController : ModuleControllerBase
     {
         _repositoryService = repositoryService;
         _releaseService = releaseService;
+        _issueService = issueService;
+        _webhookService = webhookService;
+        _actionService = actionService;
+        _discussionService = discussionService;
+        _projectService = projectService;
+        _analyticsService = analyticsService;
         _syncService = syncService;
     }
 
@@ -205,6 +223,50 @@ public class GitHubController : ModuleControllerBase
     }
 
     // ====================================================================
+    // Issues & Pull Requests
+    // ====================================================================
+
+    /// <summary>GET /api/crm/github/issues?moduleId={moduleId}&amp;repositoryId={repositoryId}</summary>
+    [HttpGet("issues")]
+    [Authorize(Policy = PolicyNames.ViewModule)]
+    public async Task<IActionResult> GetIssues(
+        [FromQuery] int moduleId,
+        [FromQuery] int repositoryId,
+        [FromQuery] string? state = null)
+    {
+        if (!IsAuthorizedEntityId(EntityNames.Module, moduleId))
+            return Forbid();
+
+        try
+        {
+            var issues = await _issueService.GetByRepositoryAsync(repositoryId, moduleId, state);
+            return Ok(issues);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// GET /api/crm/github/issues/entity?moduleId={moduleId}&amp;entityType={entityType}&amp;entityId={entityId}
+    /// Get open issues linked to a CRM entity via its repositories.
+    /// </summary>
+    [HttpGet("issues/entity")]
+    [Authorize(Policy = PolicyNames.ViewModule)]
+    public async Task<IActionResult> GetIssuesByEntity(
+        [FromQuery] int moduleId,
+        [FromQuery] string entityType,
+        [FromQuery] int entityId)
+    {
+        if (!IsAuthorizedEntityId(EntityNames.Module, moduleId))
+            return Forbid();
+
+        var issues = await _issueService.GetByEntityAsync(entityType, entityId, moduleId);
+        return Ok(issues);
+    }
+
+    // ====================================================================
     // Links (repository ↔ CRM entity)
     // ====================================================================
 
@@ -289,5 +351,117 @@ public class GitHubController : ModuleControllerBase
 
         var repos = await _repositoryService.GetByEntityAsync(entityType, entityId, moduleId);
         return Ok(repos);
+    }
+
+    // ====================================================================
+    // Actions
+    // ====================================================================
+
+    /// <summary>GET /api/crm/github/actions?moduleId={moduleId}&amp;repositoryId={repositoryId}</summary>
+    [HttpGet("actions")]
+    [Authorize(Policy = PolicyNames.ViewModule)]
+    public async Task<IActionResult> GetActions([FromQuery] int moduleId, [FromQuery] int repositoryId)
+    {
+        if (!IsAuthorizedEntityId(EntityNames.Module, moduleId)) return Forbid();
+        return Ok(await _actionService.GetByRepositoryAsync(repositoryId, moduleId));
+    }
+
+    /// <summary>POST /api/crm/github/actions/sync?moduleId={moduleId}&amp;repositoryId={repositoryId}</summary>
+    [HttpPost("actions/sync")]
+    [Authorize(Policy = PolicyNames.EditModule)]
+    public async Task<IActionResult> SyncActions([FromQuery] int moduleId, [FromQuery] int repositoryId)
+    {
+        if (!IsAuthorizedEntityId(EntityNames.Module, moduleId)) return Forbid();
+        var count = await _actionService.SyncActionsAsync(repositoryId, moduleId);
+        return Ok(new { synced = count });
+    }
+
+    // ====================================================================
+    // Discussions
+    // ====================================================================
+
+    /// <summary>GET /api/crm/github/discussions?moduleId={moduleId}&amp;repositoryId={repositoryId}</summary>
+    [HttpGet("discussions")]
+    [Authorize(Policy = PolicyNames.ViewModule)]
+    public async Task<IActionResult> GetDiscussions([FromQuery] int moduleId, [FromQuery] int repositoryId)
+    {
+        if (!IsAuthorizedEntityId(EntityNames.Module, moduleId)) return Forbid();
+        return Ok(await _discussionService.GetByRepositoryAsync(repositoryId, moduleId));
+    }
+
+    /// <summary>POST /api/crm/github/discussions/sync?moduleId={moduleId}&amp;repositoryId={repositoryId}</summary>
+    [HttpPost("discussions/sync")]
+    [Authorize(Policy = PolicyNames.EditModule)]
+    public async Task<IActionResult> SyncDiscussions([FromQuery] int moduleId, [FromQuery] int repositoryId)
+    {
+        if (!IsAuthorizedEntityId(EntityNames.Module, moduleId)) return Forbid();
+        var count = await _discussionService.SyncDiscussionsAsync(repositoryId, moduleId);
+        return Ok(new { synced = count });
+    }
+
+    // ====================================================================
+    // Projects
+    // ====================================================================
+
+    /// <summary>GET /api/crm/github/projects?moduleId={moduleId}&amp;repositoryId={repositoryId}</summary>
+    [HttpGet("projects")]
+    [Authorize(Policy = PolicyNames.ViewModule)]
+    public async Task<IActionResult> GetProjects([FromQuery] int moduleId, [FromQuery] int repositoryId)
+    {
+        if (!IsAuthorizedEntityId(EntityNames.Module, moduleId)) return Forbid();
+        return Ok(await _projectService.GetByRepositoryAsync(repositoryId, moduleId));
+    }
+
+    /// <summary>POST /api/crm/github/projects/sync?moduleId={moduleId}&amp;repositoryId={repositoryId}</summary>
+    [HttpPost("projects/sync")]
+    [Authorize(Policy = PolicyNames.EditModule)]
+    public async Task<IActionResult> SyncProjects([FromQuery] int moduleId, [FromQuery] int repositoryId)
+    {
+        if (!IsAuthorizedEntityId(EntityNames.Module, moduleId)) return Forbid();
+        var count = await _projectService.SyncProjectsAsync(repositoryId, moduleId);
+        return Ok(new { synced = count });
+    }
+
+    // ====================================================================
+    // Analytics
+    // ====================================================================
+
+    /// <summary>GET /api/crm/github/analytics?moduleId={moduleId}</summary>
+    [HttpGet("analytics")]
+    [Authorize(Policy = PolicyNames.ViewModule)]
+    public async Task<IActionResult> GetAnalytics([FromQuery] int moduleId)
+    {
+        if (!IsAuthorizedEntityId(EntityNames.Module, moduleId)) return Forbid();
+        return Ok(await _analyticsService.GetAnalyticsAsync(moduleId));
+    }
+
+    // ====================================================================
+    // Webhooks
+    // ====================================================================
+
+    /// <summary>
+    /// POST /api/crm/github/webhook?moduleId={moduleId}
+    /// Receives GitHub webhook events. Public endpoint, no auth.
+    /// </summary>
+    [HttpPost("webhook")]
+    [AllowAnonymous]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> ReceiveWebhook([FromQuery] int moduleId)
+    {
+        var eventType = Request.Headers["X-GitHub-Event"].FirstOrDefault() ?? "unknown";
+        var signature = Request.Headers["X-Hub-Signature-256"].FirstOrDefault();
+
+        string payload;
+        using (var reader = new StreamReader(Request.Body))
+        {
+            payload = await reader.ReadToEndAsync();
+        }
+
+        var result = await _webhookService.ProcessAsync(eventType, payload, signature, moduleId);
+
+        if (result.Success)
+            return Ok(result);
+
+        return StatusCode(500, result);
     }
 }

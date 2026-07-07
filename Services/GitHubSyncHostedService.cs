@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Oqtane.Infrastructure;
+using StudioElf.Module.CRM.GitHubConnector;
 using Oqtane.Repository;
 using Oqtane.Shared;
 
@@ -9,10 +10,12 @@ namespace StudioElf.Module.GitHubConnector.Services;
 /// <summary>
 /// Background hosted service that periodically synchronizes GitHub repository data.
 /// Auto-registers with the Oqtane Job Scheduler on first run.
-/// Enabled only when a Personal Access Token is configured.
+/// Also initializes the extension service locator for timeline queries.
 /// </summary>
 public class GitHubSyncHostedService : HostedServiceBase
 {
+    private static bool _initialized;
+
     /// <summary>
     /// Initializes a new instance of <see cref="GitHubSyncHostedService"/>.
     /// </summary>
@@ -29,6 +32,13 @@ public class GitHubSyncHostedService : HostedServiceBase
     /// <inheritdoc />
     public override async Task<string> ExecuteJobAsync(IServiceProvider provider)
     {
+        // Initialize extension service locator on first execution
+        if (!_initialized)
+        {
+            GitHubConnectorExtension.Initialize(provider);
+            _initialized = true;
+        }
+
         var logger = provider.GetRequiredService<ILogger<GitHubSyncHostedService>>();
         var syncService = provider.GetRequiredService<IGitHubSyncService>();
         var moduleRepository = provider.GetRequiredService<IModuleRepository>();

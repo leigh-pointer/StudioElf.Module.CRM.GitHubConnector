@@ -1,13 +1,10 @@
-@attribute [OqtaneIgnore]
 @namespace StudioElf.Module.CRM.GitHubConnector
-@using Oqtane.Shared
 @using System.Text.Json
 @using Microsoft.AspNetCore.Components.Web
-@using Microsoft.EntityFrameworkCore
-@using StudioElf.Module.CRM
+@using StudioElf.Module.GitHubConnector.Client
 @using StudioElf.Module.GitHubConnector.Models
 @using StudioElf.Module.GitHubConnector.Services
-@inherits CrmBase
+@inherits GitHubConnectorBase
 @inject IGitHubRepositoryService RepositoryService
 @inject IGitHubReleaseService ReleaseService
 

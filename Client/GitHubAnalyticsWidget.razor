@@ -1,0 +1,56 @@
+@namespace StudioElf.Module.CRM.GitHubConnector
+@using Oqtane.Shared
+@using StudioElf.Module.CRM
+@using StudioElf.Module.GitHubConnector.Models
+@using StudioElf.Module.GitHubConnector.Services
+@inherits CrmBase
+@inject IGitHubAnalyticsService AnalyticsService
+@attribute [OqtaneIgnore]
+
+<div class="card border shadow-sm h-100">
+    <div class="card-header py-2">
+        <h6 class="mb-0"><i class="bi bi-bar-chart me-1"></i>GitHub Analytics</h6>
+    </div>
+    <div class="card-body p-2">
+        @if (_loading) { <small class="text-muted">Loading...</small> }
+        else
+        {
+            <div class="row g-1 text-center mb-2">
+                <div class="col-4"><div class="fs-5 fw-bold">@_data.TotalReleases</div><small>Releases</small></div>
+                <div class="col-4"><div class="fs-5 fw-bold">@_data.OpenIssues</div><small>Open Issues</small></div>
+                <div class="col-4"><div class="fs-5 fw-bold">@_data.TotalWorkflowRuns</div><small>Workflows</small></div>
+            </div>
+            <div class="row g-1 text-center">
+                <div class="col-6"><small class="text-success">@_data.SuccessfulRuns passed</small></div>
+                <div class="col-6"><small class="text-danger">@_data.FailedRuns failed</small></div>
+            </div>
+            @if (_data.ReleasesPerMonth.Count > 0)
+            {
+                <hr class="my-1" />
+                <small class="text-muted">Releases (6mo):</small>
+                <div class="d-flex gap-1 mt-1" style="height:24px;align-items:end;">
+                    @foreach (var m in _data.ReleasesPerMonth)
+                    {
+                        var h = Math.Max(4, m.Count * 8);
+                        <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+                            <div style="height:@(h)px;background:var(--bs-primary);width:100%;border-radius:2px;" title="@m.Label: @m.Count"></div>
+                            <small style="font-size:.6rem;">@m.Label.Split('-')[1]</small>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private GitHubAnalyticsDto _data = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        try { _data = await AnalyticsService.GetAnalyticsAsync(ModuleState.ModuleId); } catch { }
+        _loading = false;
+    }
+}

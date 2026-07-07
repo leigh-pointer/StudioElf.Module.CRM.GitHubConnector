@@ -24,6 +24,21 @@ public class GitHubConnectorContext : DBContextBase, ITransientService, IMultiDa
     /// <summary>Synchronized GitHub releases.</summary>
     public DbSet<GitHubRelease> GitHubReleases => Set<GitHubRelease>();
 
+    /// <summary>Synchronized GitHub issues and pull requests.</summary>
+    public DbSet<GitHubIssue> GitHubIssues => Set<GitHubIssue>();
+
+    /// <summary>Incoming webhook events.</summary>
+    public DbSet<GitHubWebhookEvent> GitHubWebhookEvents => Set<GitHubWebhookEvent>();
+
+    /// <summary>Synchronized GitHub Discussions.</summary>
+    public DbSet<GitHubDiscussion> GitHubDiscussions => Set<GitHubDiscussion>();
+
+    /// <summary>Synchronized GitHub Projects.</summary>
+    public DbSet<GitHubProject> GitHubProjects => Set<GitHubProject>();
+
+    /// <summary>Synchronized GitHub Actions workflow runs.</summary>
+    public DbSet<GitHubActionWorkflow> GitHubActionWorkflows => Set<GitHubActionWorkflow>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -73,6 +88,93 @@ public class GitHubConnectorContext : DBContextBase, ITransientService, IMultiDa
             entity.HasIndex(e => new { e.ReleaseId, e.RepositoryId }).IsUnique();
             entity.HasIndex(e => e.RepositoryId);
 
+            entity.HasOne(e => e.Repository)
+                  .WithMany()
+                  .HasForeignKey(e => e.RepositoryId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<GitHubIssue>(entity =>
+        {
+            entity.ToTable(ActiveDatabase.RewriteName("StudioElfCRMExtnGitHubIssue"));
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.State).HasMaxLength(50);
+            entity.Property(e => e.Url).HasMaxLength(1000);
+            entity.Property(e => e.HtmlUrl).HasMaxLength(1000);
+            entity.Property(e => e.Labels).HasMaxLength(2000);
+            entity.Property(e => e.UserLogin).HasMaxLength(200);
+            entity.Property(e => e.MergeState).HasMaxLength(50);
+
+            entity.HasIndex(e => new { e.IssueNumber, e.RepositoryId }).IsUnique();
+            entity.HasIndex(e => e.RepositoryId);
+            entity.HasIndex(e => new { e.RepositoryId, e.State });
+
+            entity.HasOne(e => e.Repository)
+                  .WithMany()
+                  .HasForeignKey(e => e.RepositoryId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<GitHubWebhookEvent>(entity =>
+        {
+            entity.ToTable(ActiveDatabase.RewriteName("StudioElfCRMExtnGitHubWebhookEvent"));
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EventType).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Action).HasMaxLength(100);
+            entity.Property(e => e.DeliveryId).HasMaxLength(200);
+            entity.Property(e => e.RepositoryFullName).HasMaxLength(500);
+            entity.Property(e => e.Status).HasMaxLength(50);
+            entity.HasIndex(e => e.ModuleId);
+            entity.HasIndex(e => e.Status);
+        });
+
+        builder.Entity<GitHubDiscussion>(entity =>
+        {
+            entity.ToTable(ActiveDatabase.RewriteName("StudioElfCRMExtnGitHubDiscussion"));
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.Category).HasMaxLength(100);
+            entity.Property(e => e.State).HasMaxLength(50);
+            entity.Property(e => e.HtmlUrl).HasMaxLength(1000);
+            entity.Property(e => e.AuthorLogin).HasMaxLength(200);
+            entity.HasIndex(e => new { e.DiscussionId, e.RepositoryId }).IsUnique();
+            entity.HasIndex(e => e.RepositoryId);
+            entity.HasOne(e => e.Repository)
+                  .WithMany()
+                  .HasForeignKey(e => e.RepositoryId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<GitHubProject>(entity =>
+        {
+            entity.ToTable(ActiveDatabase.RewriteName("StudioElfCRMExtnGitHubProject"));
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.State).HasMaxLength(50);
+            entity.Property(e => e.HtmlUrl).HasMaxLength(1000);
+            entity.HasIndex(e => new { e.ProjectId, e.RepositoryId }).IsUnique();
+            entity.HasIndex(e => e.RepositoryId);
+            entity.HasOne(e => e.Repository)
+                  .WithMany()
+                  .HasForeignKey(e => e.RepositoryId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<GitHubActionWorkflow>(entity =>
+        {
+            entity.ToTable(ActiveDatabase.RewriteName("StudioElfCRMExtnGitHubActionWorkflow"));
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.WorkflowName).HasMaxLength(500);
+            entity.Property(e => e.Branch).HasMaxLength(500);
+            entity.Property(e => e.HeadBranch).HasMaxLength(500);
+            entity.Property(e => e.HeadSha).HasMaxLength(100);
+            entity.Property(e => e.Status).HasMaxLength(50);
+            entity.Property(e => e.Conclusion).HasMaxLength(50);
+            entity.Property(e => e.HtmlUrl).HasMaxLength(1000);
+            entity.Property(e => e.TriggerEvent).HasMaxLength(100);
+            entity.HasIndex(e => new { e.RunId, e.RepositoryId }).IsUnique();
+            entity.HasIndex(e => e.RepositoryId);
             entity.HasOne(e => e.Repository)
                   .WithMany()
                   .HasForeignKey(e => e.RepositoryId)

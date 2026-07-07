@@ -30,6 +30,23 @@ public interface IGitHubApiClient
     /// <summary>Verify the Personal Access Token is valid by calling GET /user.</summary>
     Task<bool> ValidateTokenAsync(CancellationToken ct = default);
 
+    /// <summary>Fetch issues and pull requests for a repository.</summary>
+    /// <param name="owner">Repository owner.</param>
+    /// <param name="repo">Repository name.</param>
+    /// <param name="state">Filter by state: "open", "closed", "all". Default "open".</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>List of parsed GitHub API issue responses.</returns>
+    Task<List<JsonDocument>> GetIssuesAsync(string owner, string repo, string state = "open", CancellationToken ct = default);
+
+    /// <summary>Fetch workflow runs for a repository.</summary>
+    Task<List<JsonDocument>> GetActionsAsync(string owner, string repo, CancellationToken ct = default);
+
+    /// <summary>Fetch discussions for a repository.</summary>
+    Task<List<JsonDocument>> GetDiscussionsAsync(string owner, string repo, CancellationToken ct = default);
+
+    /// <summary>Fetch projects (classic) for a repository.</summary>
+    Task<List<JsonDocument>> GetProjectsAsync(string owner, string repo, CancellationToken ct = default);
+
     /// <summary>
     /// Configure the API client with a base URL and authentication token.
     /// Must be called before any API requests. Can be called again to update settings.

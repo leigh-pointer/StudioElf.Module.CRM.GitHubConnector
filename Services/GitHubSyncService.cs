@@ -14,6 +14,7 @@ public class GitHubSyncService : IGitHubSyncService
 {
     private readonly IGitHubRepositoryService _repositoryService;
     private readonly IGitHubReleaseService _releaseService;
+    private readonly IGitHubIssueService _issueService;
     private readonly ISettingService _settingService;
     private readonly ILogger<GitHubSyncService> _logger;
 
@@ -23,11 +24,13 @@ public class GitHubSyncService : IGitHubSyncService
     public GitHubSyncService(
         IGitHubRepositoryService repositoryService,
         IGitHubReleaseService releaseService,
+        IGitHubIssueService issueService,
         ISettingService settingService,
         ILogger<GitHubSyncService> logger)
     {
         _repositoryService = repositoryService;
         _releaseService = releaseService;
+        _issueService = issueService;
         _settingService = settingService;
         _logger = logger;
     }
@@ -87,9 +90,33 @@ public class GitHubSyncService : IGitHubSyncService
                 }
             }
 
+            // Sync issues if enabled
+            if (settings.EnableIssueTracking)
+            {
+                var repos = await _repositoryService.GetAllAsync(moduleId);
+
+                foreach (var repo in repos)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    try
+                    {
+                        var issueCount = await _issueService.SyncIssuesAsync(
+                            repo.Id, moduleId, ct);
+                        result.IssuesUpdated += issueCount;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to sync issues for repository {RepoId}", repo.Id);
+                        result.Errors.Add($"Issue sync failed for '{repo.FullName}': {ex.Message}");
+                        result.Success = false;
+                    }
+                }
+            }
+
             result.Success = result.Errors.Count == 0;
             result.Message = $"Sync completed. " +
-                $"{result.RepositoriesUpdated} repos, {result.ReleasesUpdated} releases synced. " +
+                $"{result.RepositoriesUpdated} repos, {result.ReleasesUpdated} releases, {result.IssuesUpdated} issues synced. " +
                 $"{result.Errors.Count} error(s).";
         }
         catch (OperationCanceledException)

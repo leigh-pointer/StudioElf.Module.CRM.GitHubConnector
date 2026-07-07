@@ -1,9 +1,11 @@
 @namespace StudioElf.Module.CRM.GitHubConnector
-@using StudioElf.Module.CRM
+@using Microsoft.AspNetCore.Components.Web
+@using StudioElf.Module.GitHubConnector.Client
 @using StudioElf.Module.GitHubConnector.Models
 @using StudioElf.Module.GitHubConnector.Services
-@inherits CrmBase
+@inherits GitHubConnectorBase
 @inject IGitHubRepositoryService RepositoryService
+@inject IGitHubIssueService IssueService
 
 <div class="crm-tab">
     <h5>GitHub Repositories</h5>
@@ -57,17 +59,65 @@
             <hr />
             <h6>Link a Repository</h6>
             <div class="input-group mb-2">
-                <select @bind="SelectedRepoId" class="form-select">
-                    <option value="">-- Select repository --</option>
+                <select @onchange="OnRepoSelected" class="form-select">
+                    <option value="0">-- Select repository --</option>
                     @foreach (var repo in AvailableRepos)
                     {
                         <option value="@repo.Id">@repo.FullName</option>
                     }
                 </select>
-                <button class="btn btn-primary" @onclick="LinkRepoAsync" disabled="@(SelectedRepoId <= 0 || IsLinking)">
+                <button class="btn btn-primary" @onclick="LinkRepoAsync" disabled="@(SelectedRepoId == 0 || IsLinking)">
                     @(IsLinking ? "Linking..." : "Link")
                 </button>
             </div>
+        }
+    }
+
+    <!-- Open Issues -->
+    @if (LinkedRepos.Count > 0)
+    {
+        <hr />
+        <h6>Open Issues</h6>
+        @if (_loadingIssues)
+        {
+            <p class="text-muted">Loading issues...</p>
+        }
+        else if (_openIssues.Count == 0)
+        {
+            <p class="text-muted">No open issues.</p>
+        }
+        else
+        {
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Repo</th>
+                        <th>Labels</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var issue in _openIssues)
+                    {
+                        <tr>
+                            <td><code>#@issue.IssueNumber</code></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(issue.HtmlUrl))
+                                {
+                                    <a href="@issue.HtmlUrl" target="_blank" rel="noopener">@issue.Title</a>
+                                }
+                                else
+                                {
+                                    @issue.Title
+                                }
+                            </td>
+                            <td><small>@issue.RepositoryName</small></td>
+                            <td><small>@issue.Labels</small></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         }
     }
 
@@ -86,8 +136,19 @@
 
     private List<GitHubRepositoryDto> LinkedRepos { get; set; } = new();
     private List<GitHubRepositoryDto> AvailableRepos { get; set; } = new();
+    private List<GitHubIssueDto> _openIssues { get; set; } = new();
+    private bool _loadingIssues;
+
     private int SelectedRepoId { get; set; }
     private bool IsLinking;
+
+    private void OnRepoSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id))
+            SelectedRepoId = id;
+        else
+            SelectedRepoId = 0;
+    }
     private string? Message;
     private bool IsError;
 
@@ -103,6 +164,13 @@
             var allRepos = await RepositoryService.GetAllAsync(ModuleState.ModuleId);
             LinkedRepos = await RepositoryService.GetByEntityAsync("contact", ContactId, ModuleState.ModuleId);
             AvailableRepos = allRepos.Where(r => !LinkedRepos.Any(l => l.Id == r.Id)).ToList();
+
+            if (LinkedRepos.Count > 0)
+            {
+                _loadingIssues = true;
+                _openIssues = await IssueService.GetByEntityAsync("contact", ContactId, ModuleState.ModuleId);
+                _loadingIssues = false;
+            }
         }
         catch (Exception ex)
         {

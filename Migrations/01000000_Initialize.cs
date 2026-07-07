@@ -9,7 +9,7 @@ namespace StudioElf.Module.GitHubConnector.Migrations;
 
 /// <summary>
 /// Initial migration for the GitHub Connector extension.
-/// Creates the GitHubRepository, GitHubRepositoryLink, and GitHubRelease tables.
+/// Creates all extension tables: repos, links, releases, issues, webhooks, discussions, projects, actions.
 /// </summary>
 [DbContext(typeof(GitHubConnectorContext))]
 [Migration("StudioElf.Module.GitHubConnector.01.00.00.00")]
@@ -34,6 +34,21 @@ public class InitializeGitHubConnector : MultiDatabaseMigration
 
         var releaseBuilder = new GitHubReleaseEntityBuilder(migrationBuilder, ActiveDatabase);
         releaseBuilder.Create();
+
+        var issueBuilder = new GitHubIssueEntityBuilder(migrationBuilder, ActiveDatabase);
+        issueBuilder.Create();
+
+        var webhookBuilder = new GitHubWebhookEventEntityBuilder(migrationBuilder, ActiveDatabase);
+        webhookBuilder.Create();
+
+        var discussionBuilder = new GitHubDiscussionEntityBuilder(migrationBuilder, ActiveDatabase);
+        discussionBuilder.Create();
+
+        var projectBuilder = new GitHubProjectEntityBuilder(migrationBuilder, ActiveDatabase);
+        projectBuilder.Create();
+
+        var actionBuilder = new GitHubActionWorkflowEntityBuilder(migrationBuilder, ActiveDatabase);
+        actionBuilder.Create();
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
@@ -46,5 +61,20 @@ public class InitializeGitHubConnector : MultiDatabaseMigration
 
         var repoBuilder = new GitHubRepositoryEntityBuilder(migrationBuilder, ActiveDatabase);
         repoBuilder.Drop();
+
+        var issueBuilder = new GitHubIssueEntityBuilder(migrationBuilder, ActiveDatabase);
+        issueBuilder.Drop();
+
+        var webhookBuilder = new GitHubWebhookEventEntityBuilder(migrationBuilder, ActiveDatabase);
+        webhookBuilder.Drop();
+
+        var discussionBuilder = new GitHubDiscussionEntityBuilder(migrationBuilder, ActiveDatabase);
+        discussionBuilder.Drop();
+
+        var projectBuilder = new GitHubProjectEntityBuilder(migrationBuilder, ActiveDatabase);
+        projectBuilder.Drop();
+
+        var actionBuilder = new GitHubActionWorkflowEntityBuilder(migrationBuilder, ActiveDatabase);
+        actionBuilder.Drop();
     }
 }

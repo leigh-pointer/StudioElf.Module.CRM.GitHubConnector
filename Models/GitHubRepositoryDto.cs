@@ -81,6 +81,9 @@ public class SyncResultDto
     /// <summary>Number of releases updated during this sync.</summary>
     public int ReleasesUpdated { get; set; }
 
+    /// <summary>Number of issues updated during this sync.</summary>
+    public int IssuesUpdated { get; set; }
+
     /// <summary>List of error messages, if any.</summary>
     public List<string> Errors { get; set; } = new();
 }

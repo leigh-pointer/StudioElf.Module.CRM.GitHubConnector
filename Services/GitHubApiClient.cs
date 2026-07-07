@@ -65,6 +65,81 @@ public class GitHubApiClient : IGitHubApiClient
         return results;
     }
 
+    public async Task<List<JsonDocument>> GetIssuesAsync(string owner, string repo, string state = "open", CancellationToken ct = default)
+    {
+        var results = new List<JsonDocument>();
+        var url = $"{_baseUrl}/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues?state={state}&per_page=100";
+
+        while (url != null)
+        {
+            var (document, nextUrl) = await SendWithPaginationAsync(url, ct);
+            if (document?.RootElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var element in document.RootElement.EnumerateArray())
+                {
+                    results.Add(JsonDocument.Parse(element.GetRawText()));
+                }
+            }
+            url = nextUrl;
+        }
+
+        return results;
+    }
+
+    public async Task<List<JsonDocument>> GetActionsAsync(string owner, string repo, CancellationToken ct = default)
+    {
+        var results = new List<JsonDocument>();
+        var url = $"{_baseUrl}/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/actions/runs?per_page=100";
+
+        while (url != null)
+        {
+            var (document, nextUrl) = await SendWithPaginationAsync(url, ct);
+            if (document?.RootElement.TryGetProperty("workflow_runs", out var runs) == true && runs.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var run in runs.EnumerateArray())
+                    results.Add(JsonDocument.Parse(run.GetRawText()));
+            }
+            url = nextUrl;
+        }
+        return results;
+    }
+
+    public async Task<List<JsonDocument>> GetDiscussionsAsync(string owner, string repo, CancellationToken ct = default)
+    {
+        var results = new List<JsonDocument>();
+        var url = $"{_baseUrl}/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/discussions?per_page=100";
+
+        while (url != null)
+        {
+            var (document, nextUrl) = await SendWithPaginationAsync(url, ct);
+            if (document?.RootElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var element in document.RootElement.EnumerateArray())
+                    results.Add(JsonDocument.Parse(element.GetRawText()));
+            }
+            url = nextUrl;
+        }
+        return results;
+    }
+
+    public async Task<List<JsonDocument>> GetProjectsAsync(string owner, string repo, CancellationToken ct = default)
+    {
+        var results = new List<JsonDocument>();
+        var url = $"{_baseUrl}/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/projects?per_page=100";
+
+        while (url != null)
+        {
+            var (document, nextUrl) = await SendWithPaginationAsync(url, ct);
+            if (document?.RootElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var element in document.RootElement.EnumerateArray())
+                    results.Add(JsonDocument.Parse(element.GetRawText()));
+            }
+            url = nextUrl;
+        }
+        return results;
+    }
+
     public async Task<bool> ValidateTokenAsync(CancellationToken ct = default)
     {
         try
