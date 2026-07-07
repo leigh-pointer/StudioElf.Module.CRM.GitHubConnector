@@ -7,49 +7,16 @@
 @inherits GitHubConnectorBase
 @inject IGitHubRepositoryService RepositoryService
 @inject IGitHubReleaseService ReleaseService
+@inject IGitHubSyncService SyncService
 
 <div class="crm-shell">
     <h3>CRM GitHub Enterprise Connector</h3>
     <p class="text-muted">
         Manage GitHub repository synchronization and linking.
-        Configure your Personal Access Token below to get started.
+        Settings are available in the gear icon (Host) and Settings tab (Users).
     </p>
 
     <hr />
-
-    <!-- Settings Section -->
-    <div class="card mb-3">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Settings</h5>
-        </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label class="form-label">GitHub API URL</label>
-                <input @bind="Settings.GitHubApiUrl" class="form-control" placeholder="https://api.github.com" />
-                <small class="text-muted">For GitHub Enterprise Server, use https://[hostname]/api/v3</small>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Personal Access Token</label>
-                <input @bind="Settings.PersonalAccessToken" type="password" class="form-control" placeholder="ghp_..." />
-                <small class="text-muted">Requires repo scope for private repositories.</small>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Sync Interval (minutes)</label>
-                <input @bind="Settings.SynchronizationIntervalMinutes" type="number" class="form-control" min="1" max="1440" />
-            </div>
-            <div class="form-check mb-3">
-                <input @bind="Settings.EnableReleaseTracking" class="form-check-input" type="checkbox" id="enableReleases" />
-                <label class="form-check-label" for="enableReleases">Enable Release Tracking</label>
-            </div>
-            <button class="btn btn-primary" @onclick="SaveSettingsAsync" disabled="@IsSaving">
-                @(IsSaving ? "Saving..." : "Save Settings")
-            </button>
-            @if (!string.IsNullOrEmpty(StatusMessage))
-            {
-                <span class="ms-2 text-@(StatusIsError ? "danger" : "success")">@StatusMessage</span>
-            }
-        </div>
-    </div>
 
     <!-- Repository List -->
     <div class="card mb-3">
@@ -99,7 +66,7 @@
                     <tbody>
                         @foreach (var repo in Repositories)
                         {
-                            <tr>
+                            <tr @onclick="() => LoadReleasesAsync(repo.Id)" style="cursor:pointer;">
                                 <td>
                                     <strong>@repo.FullName</strong><br />
                                     <small class="text-muted">@repo.Description</small>
@@ -205,9 +172,17 @@
     {
         try
         {
-            var settings = await SettingService.GetSettingsAsync("Module", ModuleState.ModuleId);
-            var json = settings.GetValueOrDefault(GitHubSettings.SettingsKey, "{}");
-            Settings = JsonSerializer.Deserialize<GitHubSettings>(json) ?? new GitHubSettings();
+            Dictionary<string, string> SiteSettings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            if (SiteSettings.TryGetValue(GitHubSettings.SettingsKey, out var jsonSettings))
+            {
+                Settings = JsonSerializer.Deserialize<GitHubSettings>(jsonSettings) ?? new GitHubSettings();
+            }
+            else
+            {
+                Settings = new GitHubSettings();
+            }   
+            // var json = ModuleSettingService.GetSetting(raw, GitHubSettings.SettingsKey, "{}");
+            // Settings = JsonSerializer.Deserialize<GitHubSettings>(json) ?? new GitHubSettings();
         }
         catch (Exception ex)
         {
@@ -218,25 +193,18 @@
 
     private async Task SaveSettingsAsync()
     {
-        IsSaving = true;
         StatusMessage = null;
-
         try
         {
             var json = JsonSerializer.Serialize(Settings);
-            await SettingService.AddOrUpdateSettingAsync(
-                "Module", ModuleState.ModuleId, GitHubSettings.SettingsKey, json, false);
-            StatusMessage = "Settings saved.";
-            StatusIsError = false;
+            var raw = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            raw = SettingService.SetSetting(raw, GitHubSettings.SettingsKey, json);
+            await SettingService.UpdateModuleSettingsAsync(raw, ModuleState.ModuleId);
         }
         catch (Exception ex)
         {
             StatusMessage = $"Failed to save settings: {ex.Message}";
             StatusIsError = true;
-        }
-        finally
-        {
-            IsSaving = false;
         }
     }
 
@@ -304,9 +272,7 @@
 
         try
         {
-            // Save settings first so sync uses latest config
-            await SaveSettingsAsync();
-            SyncResult = await RepositoryService.SyncAllAsync(ModuleState.ModuleId);
+            SyncResult = await SyncService.SyncAllAsync(ModuleState.ModuleId, Settings.PersonalAccessToken);
             await LoadRepositoriesAsync();
         }
         catch (Exception ex)

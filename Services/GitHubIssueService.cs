@@ -31,6 +31,7 @@ public class GitHubIssueService : IGitHubIssueService
         if (!string.IsNullOrEmpty(state))
             query = query.Where(i => i.State == state);
         return await query
+            .Include(i => i.Repository)
             .OrderByDescending(i => i.CreatedAt)
             .Select(i => ToDto(i))
             .ToListAsync();
@@ -51,6 +52,7 @@ public class GitHubIssueService : IGitHubIssueService
             query = query.Where(i => !i.IsPullRequest);
 
         return await query
+            .Include(i => i.Repository)
             .OrderByDescending(i => i.CreatedAt)
             .Take(50)
             .Select(i => ToDto(i))

@@ -1,0 +1,92 @@
+@attribute [OqtaneIgnore]
+@namespace StudioElf.Module.CRM.GitHubConnector
+@using Microsoft.AspNetCore.Components.Web
+@using System.Text.Json
+@using Oqtane.Modules
+@using Oqtane.Services
+@using Oqtane.Shared
+@using StudioElf.Module.GitHubConnector.Models
+@inherits ModuleBase
+@inject ISettingService SettingService
+
+<div class="p-3">
+    <h5>GitHub Connector — Settings</h5>
+    <p class="text-muted">Configure sync preferences for this module.</p>
+
+    <div class="mb-3">
+        <label class="form-label">Sync Interval (minutes)</label>
+        <input @bind="_settings.SynchronizationIntervalMinutes" type="number" class="form-control" min="1" max="1440" />
+    </div>
+    <div class="form-check mb-3">
+        <input @bind="_settings.EnableReleaseTracking" class="form-check-input" type="checkbox" id="usrEnableReleases" />
+        <label class="form-check-label" for="usrEnableReleases">Enable Release Tracking</label>
+    </div>
+    <div class="form-check mb-3">
+        <input @bind="_settings.EnableIssueTracking" class="form-check-input" type="checkbox" id="usrEnableIssues" />
+        <label class="form-check-label" for="usrEnableIssues">Enable Issue Tracking</label>
+    </div>
+    <div class="form-check mb-3">
+        <input @bind="_settings.ShowPrereleases" class="form-check-input" type="checkbox" id="usrShowPre" />
+        <label class="form-check-label" for="usrShowPre">Show Pre-releases</label>
+    </div>
+    <hr />
+    <h6>Dashboard Widgets</h6>
+    <div class="form-check mb-2">
+        <input @bind="_settings.ShowOverviewWidget" class="form-check-input" type="checkbox" id="usrWidOverview" />
+        <label class="form-check-label" for="usrWidOverview">GitHub Overview</label>
+    </div>
+    <div class="form-check mb-2">
+        <input @bind="_settings.ShowRecentReleasesWidget" class="form-check-input" type="checkbox" id="usrWidReleases" />
+        <label class="form-check-label" for="usrWidReleases">Recent Releases</label>
+    </div>
+    <div class="form-check mb-2">
+        <input @bind="_settings.ShowAnalyticsWidget" class="form-check-input" type="checkbox" id="usrWidAnalytics" />
+        <label class="form-check-label" for="usrWidAnalytics">GitHub Analytics</label>
+    </div>
+
+    <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_saving">
+        @(_saving ? "Saving..." : "Save")
+    </button>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <div class="alert alert-success mt-2 mb-0">@_message</div>
+    }
+</div>
+
+@code {
+    private GitHubSettings _settings = new();
+    private bool _saving;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var raw = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+        var json = SettingService.GetSetting(raw, GitHubSettings.SettingsKey, "{}");
+        _settings = JsonSerializer.Deserialize<GitHubSettings>(json) ?? new GitHubSettings();
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        try
+        {
+            var json = JsonSerializer.Serialize(_settings);
+            var raw = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            raw = SettingService.SetSetting(raw, GitHubSettings.SettingsKey, json);
+            await SettingService.UpdateModuleSettingsAsync(raw, ModuleState.ModuleId);
+            _message = "Settings saved.";
+        }
+        catch (Exception ex)
+        {
+            _message = $"Error: {ex.Message}";
+        }
+        finally { _saving = false; }
+    }
+}

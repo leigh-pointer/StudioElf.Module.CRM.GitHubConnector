@@ -63,12 +63,18 @@ public class GitHubConnectorExtension : ICrmExtension
     };
 
     /// <inheritdoc />
-    public List<CrmEmailTemplate> GetEmailTemplates() => new();
+    public List<CrmEmailTemplate> GetEmailTemplates() => new()
+    {
+        new("Release Published", "New Release: {{Release.TagName}} for {{Repository.FullName}}",
+            "<p>Hi {{Contact.FirstName}},</p><p>A new release <strong>{{Release.TagName}}</strong> has been published for <strong>{{Repository.FullName}}</strong>.</p><p>{{Release.Body}}</p><p><a href='{{Release.Url}}'>View on GitHub</a></p>"),
+        new("Sync Completed", "GitHub Sync Completed — {{SyncResult.Message}}",
+            "<p>GitHub synchronization completed.</p><p>{{SyncResult.RepositoriesUpdated}} repos, {{SyncResult.ReleasesUpdated}} releases, {{SyncResult.IssuesUpdated}} issues synced.</p>"),
+    };
 
     /// <inheritdoc />
     public Type GetShellComponentType() => typeof(GitHubConnectorShell);
-    public Type GetSettingsComponentType() => null;
-    public Type GetUserSettingsComponentType() => null;
+    public Type GetSettingsComponentType() => typeof(GitHubHostSettings);
+    public Type GetUserSettingsComponentType() => typeof(GitHubUserSettings);
 
     /// <inheritdoc />
     public List<TimelineItem> GetTimelineItems(string entityName, int entityId, int moduleId, TimelineFilter filter)

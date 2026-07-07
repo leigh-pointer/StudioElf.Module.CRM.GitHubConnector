@@ -1,23 +1,20 @@
 @namespace StudioElf.Module.CRM.GitHubConnector
+@using System.Text.Json
 @using StudioElf.Module.GitHubConnector.Client
 @using StudioElf.Module.GitHubConnector.Models
 @using StudioElf.Module.GitHubConnector.Services
 @inherits GitHubConnectorBase
 @inject IGitHubReleaseService ReleaseService
 
+@if (!_hidden)
+{
 <div class="card border shadow-sm h-100">
     <div class="card-header py-2">
         <h6 class="mb-0"><i class="bi bi-tag me-1"></i>Recent Releases</h6>
     </div>
     <div class="card-body p-2">
-        @if (_loading)
-        {
-            <small class="text-muted">Loading...</small>
-        }
-        else if (!_releases.Any())
-        {
-            <small class="text-muted">No recent releases.</small>
-        }
+        @if (_loading) { <small class="text-muted">Loading...</small> }
+        else if (!_releases.Any()) { <small class="text-muted">No recent releases.</small> }
         else
         {
             <div class="list-group list-group-flush">
@@ -30,10 +27,7 @@
                         </div>
                         <div class="text-muted" style="font-size:.72rem;">
                             @FormatLocalDate(r.PublishedAt, "MMM dd, yyyy")
-                            @if (r.IsPrerelease)
-                            {
-                                <span class="badge bg-warning text-dark ms-1">Pre</span>
-                            }
+                            @if (r.IsPrerelease) { <span class="badge bg-warning text-dark ms-1">Pre</span> }
                         </div>
                     </div>
                 }
@@ -41,22 +35,26 @@
         }
     </div>
 </div>
+}
 
 @code {
     private List<GitHubReleaseDto> _releases = new();
     private bool _loading = true;
+    private bool _hidden;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
         try
         {
+            var raw = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            var json = SettingService.GetSetting(raw, GitHubSettings.SettingsKey, "{}");
+            var settings = JsonSerializer.Deserialize<GitHubSettings>(json) ?? new GitHubSettings();
+            if (!settings.ShowRecentReleasesWidget) { _hidden = true; _loading = false; return; }
+
             _releases = await ReleaseService.GetRecentAsync(ModuleState.ModuleId, 5);
         }
-        catch
-        {
-            _releases = new();
-        }
+        catch { _hidden = true; }
         _loading = false;
     }
 }

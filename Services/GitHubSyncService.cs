@@ -35,14 +35,18 @@ public class GitHubSyncService : IGitHubSyncService
         _logger = logger;
     }
 
-    public async Task<SyncResultDto> SyncAllAsync(int moduleId, CancellationToken ct = default)
+    public async Task<SyncResultDto> SyncAllAsync(int moduleId, string? patOverride = null, CancellationToken ct = default)
     {
         var result = new SyncResultDto();
 
         try
         {
-            // Load and apply settings
+            // Load settings from DB
             var settings = await LoadSettingsAsync(moduleId);
+
+            // Override PAT if provided directly (used by shell)
+            if (!string.IsNullOrEmpty(patOverride))
+                settings.PersonalAccessToken = patOverride;
 
             if (string.IsNullOrEmpty(settings.PersonalAccessToken))
             {

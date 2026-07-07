@@ -29,14 +29,32 @@ public class GitHubSettings
     /// <summary>Enable incoming webhook processing. (Phase 3)</summary>
     public bool EnableWebhooks { get; set; }
 
-    /// <summary>Enable issue tracking and synchronization. (Phase 2)</summary>
+    /// <summary>Show GitHub Overview widget on dashboard.</summary>
+    public bool ShowOverviewWidget { get; set; } = true;
+
+    /// <summary>Show Recent Releases widget on dashboard.</summary>
+    public bool ShowRecentReleasesWidget { get; set; } = true;
+
+    /// <summary>Show Analytics widget on dashboard.</summary>
+    public bool ShowAnalyticsWidget { get; set; } = true;
+
+    /// <summary>Enable issue tracking and synchronization.</summary>
     public bool EnableIssueTracking { get; set; }
 
-    /// <summary>Enable pull request tracking and synchronization. (Phase 2)</summary>
+    /// <summary>Enable pull request tracking and synchronization.</summary>
     public bool EnablePullRequestTracking { get; set; }
 
     /// <summary>Enable release tracking and synchronization.</summary>
     public bool EnableReleaseTracking { get; set; } = true;
+
+    /// <summary>Show pre-release versions in widgets and lists.</summary>
+    public bool ShowPrereleases { get; set; } = true;
+
+    /// <summary>Max releases to show per repo in widgets.</summary>
+    public int MaxReleasesPerRepo { get; set; } = 50;
+
+    /// <summary>Release date range filter in days (0 = no filter).</summary>
+    public int ReleaseDateRangeDays { get; set; }
 
     /// <summary>Interval in minutes between automatic background syncs. Default 30.</summary>
     public int SynchronizationIntervalMinutes { get; set; } = 30;

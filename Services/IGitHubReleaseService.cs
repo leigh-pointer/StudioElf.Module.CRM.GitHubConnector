@@ -13,6 +13,9 @@ public interface IGitHubReleaseService
     /// <summary>Get the most recent releases across all tracked repositories.</summary>
     Task<List<GitHubReleaseDto>> GetRecentAsync(int moduleId, int count = 10);
 
+    /// <summary>Get releases for a CRM entity's linked repositories.</summary>
+    Task<List<GitHubReleaseDto>> GetByEntityAsync(string entityType, int entityId, int moduleId);
+
     /// <summary>Sync releases for a repository from GitHub API.</summary>
     /// <returns>The number of releases synced (created or updated).</returns>
     Task<int> SyncReleasesAsync(int repositoryId, int moduleId, CancellationToken ct = default);

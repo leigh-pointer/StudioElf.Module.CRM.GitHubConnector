@@ -1,0 +1,75 @@
+@attribute [OqtaneIgnore]
+@namespace StudioElf.Module.CRM.GitHubConnector
+@using Microsoft.AspNetCore.Components.Web
+@using System.Text.Json
+@using Oqtane.Modules
+@using Oqtane.Services
+@using Oqtane.Shared
+@using StudioElf.Module.GitHubConnector.Models
+@inherits ModuleBase
+@inject ISettingService SettingService
+
+<div class="p-3">
+    <h5>GitHub Connector — Host Settings</h5>
+    <p class="text-muted">Configure GitHub API connection. Only visible to Host users.</p>
+
+    <div class="mb-3">
+        <label class="form-label">GitHub API URL</label>
+        <input @bind="_settings.GitHubApiUrl" class="form-control" placeholder="https://api.github.com" />
+        <small class="text-muted">For GitHub Enterprise Server, use https://[hostname]/api/v3</small>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Personal Access Token</label>
+        <input @bind="_settings.PersonalAccessToken" type="password" class="form-control" placeholder="ghp_..." />
+        <small class="text-muted">Requires repo scope for private repositories.</small>
+    </div>
+
+    <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_saving">
+        @(_saving ? "Saving..." : "Save")
+    </button>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <div class="alert alert-success mt-2 mb-0">@_message</div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback OnSaved { get; set; }
+
+    private GitHubSettings _settings = new();
+    private bool _saving;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var raw = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+        var json = SettingService.GetSetting(raw, GitHubSettings.SettingsKey, "{}");
+        _settings = JsonSerializer.Deserialize<GitHubSettings>(json) ?? new GitHubSettings();
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        try
+        {
+            var json = JsonSerializer.Serialize(_settings);
+            var raw = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            raw = SettingService.SetSetting(raw, GitHubSettings.SettingsKey, json);
+            await SettingService.UpdateModuleSettingsAsync(raw, ModuleState.ModuleId);
+            _message = "Settings saved.";
+            await OnSaved.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = $"Error: {ex.Message}";
+        }
+        finally { _saving = false; }
+    }
+}

@@ -44,6 +44,7 @@ public class ServerStartup : IServerStartup
         services.AddScoped<IGitHubDiscussionService, GitHubDiscussionService>();
         services.AddScoped<IGitHubProjectService, GitHubProjectService>();
         services.AddScoped<IGitHubAnalyticsService, GitHubAnalyticsService>();
+        services.AddScoped<IGitHubKnowledgeGraphService, GitHubKnowledgeGraphService>();
         services.AddScoped<IGitHubSyncService, GitHubSyncService>();
 
         // Background sync job — auto-registers with Oqtane Job Scheduler

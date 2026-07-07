@@ -11,5 +11,8 @@ namespace StudioElf.Module.GitHubConnector.Services;
 public interface IGitHubSyncService
 {
     /// <summary>Sync all repositories and their releases for a module.</summary>
-    Task<SyncResultDto> SyncAllAsync(int moduleId, CancellationToken ct = default);
+    /// <param name="moduleId">CRM module ID.</param>
+    /// <param name="settingsJson">Optional pre-loaded settings JSON. If null, loads from ISettingService.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task<SyncResultDto> SyncAllAsync(int moduleId, string? patOverride = null, CancellationToken ct = default);
 }

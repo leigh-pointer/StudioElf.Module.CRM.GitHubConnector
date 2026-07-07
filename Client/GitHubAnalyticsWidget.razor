@@ -1,12 +1,13 @@
 @namespace StudioElf.Module.CRM.GitHubConnector
-@using Oqtane.Shared
-@using StudioElf.Module.CRM
+@using System.Text.Json
+@using StudioElf.Module.GitHubConnector.Client
 @using StudioElf.Module.GitHubConnector.Models
 @using StudioElf.Module.GitHubConnector.Services
-@inherits CrmBase
+@inherits GitHubConnectorBase
 @inject IGitHubAnalyticsService AnalyticsService
-@attribute [OqtaneIgnore]
 
+@if (!_hidden)
+{
 <div class="card border shadow-sm h-100">
     <div class="card-header py-2">
         <h6 class="mb-0"><i class="bi bi-bar-chart me-1"></i>GitHub Analytics</h6>
@@ -42,15 +43,26 @@
         }
     </div>
 </div>
+}
 
 @code {
     private GitHubAnalyticsDto _data = new();
     private bool _loading = true;
+    private bool _hidden;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        try { _data = await AnalyticsService.GetAnalyticsAsync(ModuleState.ModuleId); } catch { }
+        try
+        {
+            var raw = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            var json = SettingService.GetSetting(raw, GitHubSettings.SettingsKey, "{}");
+            var settings = JsonSerializer.Deserialize<GitHubSettings>(json) ?? new GitHubSettings();
+            if (!settings.ShowAnalyticsWidget) { _hidden = true; _loading = false; return; }
+
+            _data = await AnalyticsService.GetAnalyticsAsync(ModuleState.ModuleId);
+        }
+        catch { _hidden = true; }
         _loading = false;
     }
 }

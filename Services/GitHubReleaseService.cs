@@ -32,6 +32,7 @@ public class GitHubReleaseService : IGitHubReleaseService
         await using var db = await _contextFactory.CreateDbContextAsync();
         return await db.GitHubReleases
             .Where(r => r.RepositoryId == repositoryId && r.Repository.ModuleId == moduleId)
+            .Include(r => r.Repository)
             .OrderByDescending(r => r.PublishedAt)
             .Select(r => ToDto(r))
             .ToListAsync();
@@ -44,6 +45,24 @@ public class GitHubReleaseService : IGitHubReleaseService
             .Where(r => r.Repository.ModuleId == moduleId)
             .OrderByDescending(r => r.PublishedAt)
             .Take(count)
+            .Select(r => ToDto(r))
+            .ToListAsync();
+    }
+
+    public async Task<List<GitHubReleaseDto>> GetByEntityAsync(string entityType, int entityId, int moduleId)
+    {
+        await using var db = await _contextFactory.CreateDbContextAsync();
+        var repoIds = await db.GitHubRepositoryLinks
+            .Where(l => l.EntityType == entityType && l.EntityId == entityId)
+            .Select(l => l.RepositoryId)
+            .ToListAsync();
+
+        if (repoIds.Count == 0) return new();
+
+        return await db.GitHubReleases
+            .Where(r => repoIds.Contains(r.RepositoryId) && r.Repository.ModuleId == moduleId)
+            .OrderByDescending(r => r.PublishedAt)
+            .Take(50)
             .Select(r => ToDto(r))
             .ToListAsync();
     }

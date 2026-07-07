@@ -27,6 +27,7 @@ public class GitHubController : ModuleControllerBase
     private readonly IGitHubDiscussionService _discussionService;
     private readonly IGitHubProjectService _projectService;
     private readonly IGitHubAnalyticsService _analyticsService;
+    private readonly IGitHubKnowledgeGraphService _kgService;
     private readonly IGitHubSyncService _syncService;
 
     /// <summary>
@@ -41,6 +42,7 @@ public class GitHubController : ModuleControllerBase
         IGitHubDiscussionService discussionService,
         IGitHubProjectService projectService,
         IGitHubAnalyticsService analyticsService,
+        IGitHubKnowledgeGraphService kgService,
         IGitHubSyncService syncService,
         ILogManager logger,
         IHttpContextAccessor accessor)
@@ -54,6 +56,7 @@ public class GitHubController : ModuleControllerBase
         _discussionService = discussionService;
         _projectService = projectService;
         _analyticsService = analyticsService;
+        _kgService = kgService;
         _syncService = syncService;
     }
 
@@ -219,6 +222,24 @@ public class GitHubController : ModuleControllerBase
             return Forbid();
 
         var releases = await _releaseService.GetRecentAsync(moduleId, count);
+        return Ok(releases);
+    }
+
+    /// <summary>
+    /// GET /api/crm/github/releases/entity?moduleId={moduleId}&amp;entityType={entityType}&amp;entityId={entityId}
+    /// Get releases for repos linked to a CRM entity (company, contact, deal).
+    /// </summary>
+    [HttpGet("releases/entity")]
+    [Authorize(Policy = PolicyNames.ViewModule)]
+    public async Task<IActionResult> GetReleasesByEntity(
+        [FromQuery] int moduleId,
+        [FromQuery] string entityType,
+        [FromQuery] int entityId)
+    {
+        if (!IsAuthorizedEntityId(EntityNames.Module, moduleId))
+            return Forbid();
+
+        var releases = await _releaseService.GetByEntityAsync(entityType, entityId, moduleId);
         return Ok(releases);
     }
 
@@ -433,6 +454,28 @@ public class GitHubController : ModuleControllerBase
     {
         if (!IsAuthorizedEntityId(EntityNames.Module, moduleId)) return Forbid();
         return Ok(await _analyticsService.GetAnalyticsAsync(moduleId));
+    }
+
+    // ====================================================================
+    // Knowledge Graph
+    // ====================================================================
+
+    /// <summary>
+    /// GET /api/crm/github/knowledgegraph?moduleId={moduleId}&amp;entityType={type}&amp;entityId={id}
+    /// Build a KnowledgeGraph of GitHub repos, issues, and releases for a CRM entity.
+    /// </summary>
+    [HttpGet("knowledgegraph")]
+    [Authorize(Policy = PolicyNames.ViewModule)]
+    public async Task<IActionResult> GetKnowledgeGraph(
+        [FromQuery] int moduleId,
+        [FromQuery] string entityType,
+        [FromQuery] int entityId)
+    {
+        if (!IsAuthorizedEntityId(EntityNames.Module, moduleId))
+            return Forbid();
+
+        var graph = await _kgService.BuildAsync(entityType, entityId, moduleId);
+        return Ok(graph);
     }
 
     // ====================================================================
