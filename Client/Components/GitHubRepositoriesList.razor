@@ -1,0 +1,59 @@
+@attribute [OqtaneIgnore]
+@namespace StudioElf.Module.CRM.GitHubConnector
+@using Oqtane.Shared
+@using StudioElf.Module.GitHubConnector.Models
+@using StudioElf.Module.GitHubConnector.Services
+@using StudioElf.Module.CRM
+@inherits CrmBase
+@inject IGitHubRepositoryService RepositoryService
+
+@* Reusable component for displaying a list of GitHub repositories. *@
+
+<div class="github-repos-list">
+    @if (Repositories.Count == 0)
+    {
+        <p class="text-muted">No linked repositories.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr>
+                    <th>Repository</th>
+                    <th>Stars</th>
+                    <th>Language</th>
+                    <th>Last Synced</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var repo in Repositories)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(repo.Url))
+                            {
+                                <a href="@repo.Url" target="_blank" rel="noopener">
+                                    <strong>@repo.FullName</strong>
+                                </a>
+                            }
+                            else
+                            {
+                                <strong>@repo.FullName</strong>
+                            }
+                            <br />
+                            <small class="text-muted">@repo.Description</small>
+                        </td>
+                        <td>@repo.Stars ⭐</td>
+                        <td>@repo.PrimaryLanguage</td>
+                        <td>@FormatLocalDate(repo.LastSyncedOn, "g")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    /// <summary>List of repositories to display.</summary>
+    [Parameter] public List<GitHubRepositoryDto> Repositories { get; set; } = new();
+}

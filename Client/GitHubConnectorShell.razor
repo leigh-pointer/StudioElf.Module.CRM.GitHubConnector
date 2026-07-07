@@ -1,0 +1,351 @@
+@attribute [OqtaneIgnore]
+@namespace StudioElf.Module.CRM.GitHubConnector
+@using Oqtane.Shared
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.EntityFrameworkCore
+@using StudioElf.Module.CRM
+@using StudioElf.Module.GitHubConnector.Models
+@using StudioElf.Module.GitHubConnector.Services
+@inherits CrmBase
+@inject IGitHubRepositoryService RepositoryService
+@inject IGitHubReleaseService ReleaseService
+
+<div class="crm-shell">
+    <h3>CRM GitHub Enterprise Connector</h3>
+    <p class="text-muted">
+        Manage GitHub repository synchronization and linking.
+        Configure your Personal Access Token below to get started.
+    </p>
+
+    <hr />
+
+    <!-- Settings Section -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Settings</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">GitHub API URL</label>
+                <input @bind="Settings.GitHubApiUrl" class="form-control" placeholder="https://api.github.com" />
+                <small class="text-muted">For GitHub Enterprise Server, use https://[hostname]/api/v3</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Personal Access Token</label>
+                <input @bind="Settings.PersonalAccessToken" type="password" class="form-control" placeholder="ghp_..." />
+                <small class="text-muted">Requires repo scope for private repositories.</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Sync Interval (minutes)</label>
+                <input @bind="Settings.SynchronizationIntervalMinutes" type="number" class="form-control" min="1" max="1440" />
+            </div>
+            <div class="form-check mb-3">
+                <input @bind="Settings.EnableReleaseTracking" class="form-check-input" type="checkbox" id="enableReleases" />
+                <label class="form-check-label" for="enableReleases">Enable Release Tracking</label>
+            </div>
+            <button class="btn btn-primary" @onclick="SaveSettingsAsync" disabled="@IsSaving">
+                @(IsSaving ? "Saving..." : "Save Settings")
+            </button>
+            @if (!string.IsNullOrEmpty(StatusMessage))
+            {
+                <span class="ms-2 text-@(StatusIsError ? "danger" : "success")">@StatusMessage</span>
+            }
+        </div>
+    </div>
+
+    <!-- Repository List -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Tracked Repositories</h5>
+            <div>
+                <button class="btn btn-outline-primary btn-sm me-1" @onclick="SyncAllAsync" disabled="@IsSyncing">
+                    @(IsSyncing ? "Syncing..." : "Sync All")
+                </button>
+                <button class="btn btn-primary btn-sm" @onclick="() => ShowAddForm = true"
+                        disabled="@ShowAddForm">
+                    + Add Repository
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (ShowAddForm)
+            {
+                <div class="input-group mb-3">
+                    <input @bind="NewRepoFullName" class="form-control"
+                           placeholder="owner/repo (e.g. dotnet/aspnetcore)"
+                           @onkeydown="HandleAddKeyDown" />
+                    <button class="btn btn-success" @onclick="AddRepositoryAsync" disabled="@IsAdding">
+                        @(IsAdding ? "Adding..." : "Add")
+                    </button>
+                    <button class="btn btn-secondary" @onclick="() => ShowAddForm = false">Cancel</button>
+                </div>
+            }
+
+            @if (Repositories.Count == 0)
+            {
+                <p class="text-muted mb-0">No repositories tracked yet. Click "+ Add Repository" to begin.</p>
+            }
+            else
+            {
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Repository</th>
+                            <th>Stars</th>
+                            <th>Forks</th>
+                            <th>Language</th>
+                            <th>Last Synced</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var repo in Repositories)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@repo.FullName</strong><br />
+                                    <small class="text-muted">@repo.Description</small>
+                                </td>
+                                <td>@repo.Stars ⭐</td>
+                                <td>@repo.Forks</td>
+                                <td>@repo.PrimaryLanguage</td>
+                                <td>@FormatLocalDate(repo.LastSyncedOn, "g")</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            @onclick="() => DeleteRepositoryAsync(repo.Id)">
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- Releases for this repo -->
+                            @if (SelectedRepoId == repo.Id)
+                            {
+                                <tr>
+                                    <td colspan="6" class="bg-light">
+                                        <button class="btn btn-sm btn-link" @onclick="() => SelectedRepoId = null">
+                                            Hide Releases
+                                        </button>
+                                        @if (Releases.Count > 0)
+                                        {
+                                            <table class="table table-sm table-borderless mb-0 mt-1">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Version</th>
+                                                        <th>Name</th>
+                                                        <th>Published</th>
+                                                        <th>Pre-release</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var release in Releases)
+                                                    {
+                                                        <tr>
+                                                            <td><code>@release.TagName</code></td>
+                                                            <td>@release.ReleaseName</td>
+                                                            <td>@FormatLocalDate(release.PublishedAt, "g")</td>
+                                                            <td>@(release.IsPrerelease ? "⚠️" : "")</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-muted mt-1 mb-0">No releases found.</p>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    @if (SyncResult != null)
+    {
+        <div class="alert alert-@(SyncResult.Success ? "success" : "warning") alert-dismissible fade show" role="alert">
+            @SyncResult.Message
+            @if (SyncResult.Errors.Count > 0)
+            {
+                <ul class="mb-0 mt-1">
+                    @foreach (var err in SyncResult.Errors)
+                    {
+                        <li>@err</li>
+                    }
+                </ul>
+            }
+            <button type="button" class="btn-close" @onclick="() => SyncResult = null"></button>
+        </div>
+    }
+</div>
+
+@code {
+    private GitHubSettings Settings { get; set; } = new();
+    private List<GitHubRepositoryDto> Repositories { get; set; } = new();
+    private List<GitHubReleaseDto> Releases { get; set; } = new();
+
+    private string? NewRepoFullName;
+    private bool ShowAddForm;
+    private bool IsSaving;
+    private bool IsSyncing;
+    private bool IsAdding;
+    private string? StatusMessage;
+    private bool StatusIsError;
+    private SyncResultDto? SyncResult;
+    private int? SelectedRepoId;
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSettingsAsync();
+        await LoadRepositoriesAsync();
+    }
+
+    private async Task LoadSettingsAsync()
+    {
+        try
+        {
+            var settings = await SettingService.GetSettingsAsync("Module", ModuleState.ModuleId);
+            var json = settings.GetValueOrDefault(GitHubSettings.SettingsKey, "{}");
+            Settings = JsonSerializer.Deserialize<GitHubSettings>(json) ?? new GitHubSettings();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to load settings: {ex.Message}";
+            StatusIsError = true;
+        }
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        IsSaving = true;
+        StatusMessage = null;
+
+        try
+        {
+            var json = JsonSerializer.Serialize(Settings);
+            await SettingService.AddOrUpdateSettingAsync(
+                "Module", ModuleState.ModuleId, GitHubSettings.SettingsKey, json, false);
+            StatusMessage = "Settings saved.";
+            StatusIsError = false;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to save settings: {ex.Message}";
+            StatusIsError = true;
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private async Task LoadRepositoriesAsync()
+    {
+        try
+        {
+            Repositories = await RepositoryService.GetAllAsync(ModuleState.ModuleId);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to load repositories: {ex.Message}";
+            StatusIsError = true;
+        }
+    }
+
+    private async Task AddRepositoryAsync()
+    {
+        if (string.IsNullOrWhiteSpace(NewRepoFullName))
+            return;
+
+        IsAdding = true;
+        StatusMessage = null;
+
+        try
+        {
+            var dto = new AddRepositoryDto { FullName = NewRepoFullName.Trim() };
+            var createdBy = PageState?.User?.Username ?? "system";
+            await RepositoryService.AddRepositoryAsync(dto, ModuleState.ModuleId, createdBy);
+            NewRepoFullName = null;
+            ShowAddForm = false;
+            await LoadRepositoriesAsync();
+            StatusMessage = "Repository added.";
+            StatusIsError = false;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to add repository: {ex.Message}";
+            StatusIsError = true;
+        }
+        finally
+        {
+            IsAdding = false;
+        }
+    }
+
+    private async Task DeleteRepositoryAsync(int repositoryId)
+    {
+        try
+        {
+            await RepositoryService.DeleteAsync(repositoryId, ModuleState.ModuleId);
+            await LoadRepositoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to remove repository: {ex.Message}";
+            StatusIsError = true;
+        }
+    }
+
+    private async Task SyncAllAsync()
+    {
+        IsSyncing = true;
+        SyncResult = null;
+
+        try
+        {
+            // Save settings first so sync uses latest config
+            await SaveSettingsAsync();
+            SyncResult = await RepositoryService.SyncAllAsync(ModuleState.ModuleId);
+            await LoadRepositoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            SyncResult = new SyncResultDto
+            {
+                Success = false,
+                Message = $"Sync failed: {ex.Message}",
+                Errors = { ex.ToString() }
+            };
+        }
+        finally
+        {
+            IsSyncing = false;
+        }
+    }
+
+    private async Task LoadReleasesAsync(int repositoryId)
+    {
+        try
+        {
+            SelectedRepoId = repositoryId;
+            Releases = await ReleaseService.GetByRepositoryAsync(repositoryId, ModuleState.ModuleId);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to load releases: {ex.Message}";
+            StatusIsError = true;
+        }
+    }
+
+    private async Task HandleAddKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await AddRepositoryAsync();
+        }
+    }
+}

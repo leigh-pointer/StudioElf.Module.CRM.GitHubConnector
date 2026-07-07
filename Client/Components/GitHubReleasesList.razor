@@ -1,0 +1,57 @@
+@attribute [OqtaneIgnore]
+@namespace StudioElf.Module.CRM.GitHubConnector
+@using Oqtane.Shared
+@using StudioElf.Module.GitHubConnector.Models
+@using StudioElf.Module.CRM
+@inherits CrmBase
+
+@* Reusable component for displaying a list of GitHub releases. *@
+
+<div class="github-releases-list">
+    @if (Releases.Count == 0)
+    {
+        <p class="text-muted">No releases found.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Repository</th>
+                    <th>Name</th>
+                    <th>Published</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var release in Releases)
+                {
+                    <tr>
+                        <td><code>@release.TagName</code></td>
+                        <td>@release.RepositoryName</td>
+                        <td>@release.ReleaseName</td>
+                        <td>@FormatLocalDate(release.PublishedAt, "g")</td>
+                        <td>
+                            @if (release.IsPrerelease)
+                            {
+                                <span class="badge bg-warning text-dark">Pre-release</span>
+                            }
+                            @if (!string.IsNullOrEmpty(release.Url))
+                            {
+                                <a href="@release.Url" target="_blank" rel="noopener" class="btn btn-sm btn-link">
+                                    View
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    /// <summary>List of releases to display.</summary>
+    [Parameter] public List<GitHubReleaseDto> Releases { get; set; } = new();
+}
