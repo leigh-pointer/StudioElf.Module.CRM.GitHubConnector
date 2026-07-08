@@ -99,6 +99,28 @@ Decide which repositories to sync. Each repo is identified by its full name in `
 
 ## Oqtane Installation
 
+### Repository Location
+
+This project expects to reside alongside the Oqtane framework in your development root:
+
+```
+Development Root/
+├── oqtane.framework/                        # Oqtane platform source
+├── StudioElf.Module.CRM/                    
+│   └── Extensions/
+│       └── StudioElf.Module.CRM.GitHubConnector/   # this repo
+├── [other modules]/ 
+```
+
+Clone into the `Extensions` folder:
+
+```bash
+cd <path-to>/StudioElf.Module.CRM/Extensions
+git clone <repo-url>
+```
+
+The project references Oqtane DLLs via relative path `../../../oqtane.framework/` from this structure. The CRM DLLs are referenced from the Oqtane Server bin directory where the CRM module is installed.
+
 ### Prerequisites
 - [Oqtane](https://www.oqtane.org/) 10.x
 - [StudioElf CRM](https://crm.studio-elf.net) module installed
