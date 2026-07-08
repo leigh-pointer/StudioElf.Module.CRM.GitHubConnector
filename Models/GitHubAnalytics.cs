@@ -32,3 +32,4 @@ public class RepoSummary
     public int OpenIssues { get; set; }
     public DateTime? LatestRelease { get; set; }
 }
+

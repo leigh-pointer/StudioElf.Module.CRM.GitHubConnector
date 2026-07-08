@@ -7,11 +7,20 @@ using Oqtane.Migrations.EntityBuilders;
 
 namespace StudioElf.Module.GitHubConnector.Migrations.EntityBuilders;
 
+/// <summary>
+/// Entity builder for the <c>StudioElfCRMExtnGitHubActionWorkflow</c> table.
+/// Creates columns matching <see cref="Models.GitHubActionWorkflow"/> properties.
+/// </summary>
 public class GitHubActionWorkflowEntityBuilder : AuditableBaseEntityBuilder<GitHubActionWorkflowEntityBuilder>
 {
     private const string _entityTableName = "StudioElfCRMExtnGitHubActionWorkflow";
     private readonly PrimaryKey<GitHubActionWorkflowEntityBuilder> _primaryKey = new("PK_StudioElfCRMExtnGitHubActionWorkflow", x => x.Id);
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="GitHubActionWorkflowEntityBuilder"/>.
+    /// </summary>
+    /// <param name="migrationBuilder">The migration builder instance.</param>
+    /// <param name="database">The active database provider.</param>
     public GitHubActionWorkflowEntityBuilder(MigrationBuilder migrationBuilder, IDatabase database) : base(migrationBuilder, database)
     {
         EntityTableName = _entityTableName;
@@ -53,3 +62,4 @@ public class GitHubActionWorkflowEntityBuilder : AuditableBaseEntityBuilder<GitH
     public OperationBuilder<AddColumnOperation> CreatedAt { get; set; } = null!;
     public OperationBuilder<AddColumnOperation> UpdatedAt { get; set; } = null!;
 }
+

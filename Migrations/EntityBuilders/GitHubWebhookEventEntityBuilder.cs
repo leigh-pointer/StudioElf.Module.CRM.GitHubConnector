@@ -7,11 +7,20 @@ using Oqtane.Migrations.EntityBuilders;
 
 namespace StudioElf.Module.GitHubConnector.Migrations.EntityBuilders;
 
+/// <summary>
+/// Entity builder for the <c>StudioElfCRMExtnGitHubWebhookEvent</c> table.
+/// Creates columns matching <see cref="Models.GitHubWebhookEvent"/> properties.
+/// </summary>
 public class GitHubWebhookEventEntityBuilder : AuditableBaseEntityBuilder<GitHubWebhookEventEntityBuilder>
 {
     private const string _entityTableName = "StudioElfCRMExtnGitHubWebhookEvent";
     private readonly PrimaryKey<GitHubWebhookEventEntityBuilder> _primaryKey = new("PK_StudioElfCRMExtnGitHubWebhookEvent", x => x.Id);
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="GitHubWebhookEventEntityBuilder"/>.
+    /// </summary>
+    /// <param name="migrationBuilder">The migration builder instance.</param>
+    /// <param name="database">The active database provider.</param>
     public GitHubWebhookEventEntityBuilder(MigrationBuilder migrationBuilder, IDatabase database) : base(migrationBuilder, database)
     {
         EntityTableName = _entityTableName;
@@ -47,3 +56,4 @@ public class GitHubWebhookEventEntityBuilder : AuditableBaseEntityBuilder<GitHub
     public OperationBuilder<AddColumnOperation> ProcessedOn { get; set; } = null!;
     public OperationBuilder<AddColumnOperation> ErrorMessage { get; set; } = null!;
 }
+

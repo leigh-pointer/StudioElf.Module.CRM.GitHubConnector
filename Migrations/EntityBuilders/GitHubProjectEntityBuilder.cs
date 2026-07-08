@@ -7,11 +7,20 @@ using Oqtane.Migrations.EntityBuilders;
 
 namespace StudioElf.Module.GitHubConnector.Migrations.EntityBuilders;
 
+/// <summary>
+/// Entity builder for the <c>StudioElfCRMExtnGitHubProject</c> table.
+/// Creates columns matching <see cref="Models.GitHubProject"/> properties.
+/// </summary>
 public class GitHubProjectEntityBuilder : AuditableBaseEntityBuilder<GitHubProjectEntityBuilder>
 {
     private const string _entityTableName = "StudioElfCRMExtnGitHubProject";
     private readonly PrimaryKey<GitHubProjectEntityBuilder> _primaryKey = new("PK_StudioElfCRMExtnGitHubProject", x => x.Id);
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="GitHubProjectEntityBuilder"/>.
+    /// </summary>
+    /// <param name="migrationBuilder">The migration builder instance.</param>
+    /// <param name="database">The active database provider.</param>
     public GitHubProjectEntityBuilder(MigrationBuilder migrationBuilder, IDatabase database) : base(migrationBuilder, database)
     {
         EntityTableName = _entityTableName;
@@ -45,3 +54,4 @@ public class GitHubProjectEntityBuilder : AuditableBaseEntityBuilder<GitHubProje
     public OperationBuilder<AddColumnOperation> CreatedAt { get; set; } = null!;
     public OperationBuilder<AddColumnOperation> UpdatedAt { get; set; } = null!;
 }
+

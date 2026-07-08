@@ -61,6 +61,7 @@ public class GitHubConnectorExtension : ICrmExtension
     {
         new("github-repos", "GitHub Repos", typeof(GitHubContactTab), 50),
         new("github-knowledge-graph", "Knowledge Graph", typeof(GitHubKnowledgeGraphTab), 60),
+        new("github-analytics", "Analytics", typeof(GitHubContactAnalyticsTab), 70),
     };
 
     /// <inheritdoc />

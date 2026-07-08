@@ -32,18 +32,21 @@ public class GitHubApiClient : IGitHubApiClient
             new ProductInfoHeaderValue("StudioElfCRM-GitHubConnector", "1.0"));
     }
 
+    /// <inheritdoc />
     public void Configure(string baseUrl, string token)
     {
         _baseUrl = baseUrl.TrimEnd('/');
         _token = token;
     }
 
+    /// <inheritdoc />
     public async Task<JsonDocument> GetRepositoryAsync(string owner, string repo, CancellationToken ct = default)
     {
         var url = $"{_baseUrl}/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}";
         return await SendAsync(url, ct);
     }
 
+    /// <inheritdoc />
     public async Task<List<JsonDocument>> GetReleasesAsync(string owner, string repo, CancellationToken ct = default)
     {
         var results = new List<JsonDocument>();
@@ -65,6 +68,7 @@ public class GitHubApiClient : IGitHubApiClient
         return results;
     }
 
+    /// <inheritdoc />
     public async Task<List<JsonDocument>> GetIssuesAsync(string owner, string repo, string state = "open", CancellationToken ct = default)
     {
         var results = new List<JsonDocument>();
@@ -86,6 +90,7 @@ public class GitHubApiClient : IGitHubApiClient
         return results;
     }
 
+    /// <inheritdoc />
     public async Task<List<JsonDocument>> GetActionsAsync(string owner, string repo, CancellationToken ct = default)
     {
         var results = new List<JsonDocument>();
@@ -104,6 +109,7 @@ public class GitHubApiClient : IGitHubApiClient
         return results;
     }
 
+    /// <inheritdoc />
     public async Task<List<JsonDocument>> GetDiscussionsAsync(string owner, string repo, CancellationToken ct = default)
     {
         var results = new List<JsonDocument>();
@@ -122,6 +128,7 @@ public class GitHubApiClient : IGitHubApiClient
         return results;
     }
 
+    /// <inheritdoc />
     public async Task<List<JsonDocument>> GetProjectsAsync(string owner, string repo, CancellationToken ct = default)
     {
         var results = new List<JsonDocument>();
@@ -140,6 +147,7 @@ public class GitHubApiClient : IGitHubApiClient
         return results;
     }
 
+    /// <inheritdoc />
     public async Task<bool> ValidateTokenAsync(CancellationToken ct = default)
     {
         try
@@ -271,3 +279,4 @@ public class GitHubApiClient : IGitHubApiClient
         return null;
     }
 }
+
