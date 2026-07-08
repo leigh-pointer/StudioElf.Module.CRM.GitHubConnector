@@ -63,4 +63,22 @@ public class GitHubWebhookService : IGitHubWebhookService
             return new WebhookResult { Success = false, Message = ex.Message };
         }
     }
+
+    public async Task<List<WebhookEventDto>> GetRecentEventsAsync(int moduleId, int count = 50)
+    {
+        await using var db = await _contextFactory.CreateDbContextAsync();
+        return await db.GitHubWebhookEvents
+            .Where(e => e.ModuleId == moduleId)
+            .OrderByDescending(e => e.ReceivedOn)
+            .Take(count)
+            .Select(e => new WebhookEventDto
+            {
+                Id = e.Id,
+                EventType = e.EventType,
+                RepositoryFullName = e.RepositoryFullName,
+                Status = e.Status,
+                ReceivedOn = e.ReceivedOn
+            })
+            .ToListAsync();
+    }
 }
