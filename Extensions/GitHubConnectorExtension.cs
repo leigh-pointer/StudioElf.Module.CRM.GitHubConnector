@@ -43,12 +43,6 @@ public class GitHubConnectorExtension : ICrmExtension
     public string IconClass => GitHubConnectorModuleInfo.IconClass;
 
     /// <inheritdoc />
-    public List<CrmNavItem> GetNavItems() => new()
-    {
-        new("github", "GitHub", "bi bi-github", 100),
-    };
-
-    /// <inheritdoc />
     public List<CrmDashboardWidget> GetDashboardWidgets() => new()
     {
         new("github-overview", "GitHub Overview", typeof(GitHubOverviewWidget), 10),
@@ -62,6 +56,18 @@ public class GitHubConnectorExtension : ICrmExtension
         new("github-repos", "GitHub Repos", typeof(GitHubContactTab), 50),
         new("github-knowledge-graph", "Knowledge Graph", typeof(GitHubKnowledgeGraphTab), 60),
         new("github-analytics", "Analytics", typeof(GitHubContactAnalyticsTab), 70),
+    };
+
+    /// <inheritdoc />
+    public List<CrmContactTab> GetCompanyTabs() => new()
+    {
+        new("github-repos", "GitHub Repos", typeof(GitHubCompanyTab), 50),
+    };
+
+    /// <inheritdoc />
+    public List<CrmContactTab> GetDealTabs() => new()
+    {
+        new("github-repos", "GitHub Repos", typeof(GitHubDealTab), 50),
     };
 
     /// <inheritdoc />

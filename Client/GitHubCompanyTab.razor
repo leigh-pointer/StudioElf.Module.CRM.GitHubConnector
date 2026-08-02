@@ -1,0 +1,13 @@
+@namespace StudioElf.Module.CRM.GitHubConnector
+@using StudioElf.Module.GitHubConnector.Client
+@inherits GitHubConnectorBase
+
+@* Company detail tab: link/unlink GitHub repos + view issues. *@
+
+<GitHubEntityTab EntityType="company" EntityId="@CompanyId" />
+
+@code {
+    /// <summary>Company ID provided by CRM company detail page.</summary>
+    [Parameter]
+    public int CompanyId { get; set; }
+}

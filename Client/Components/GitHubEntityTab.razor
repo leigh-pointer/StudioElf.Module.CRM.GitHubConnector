@@ -1,0 +1,218 @@
+@namespace StudioElf.Module.CRM.GitHubConnector
+@using Microsoft.AspNetCore.Components.Web
+@using StudioElf.Module.GitHubConnector.Client
+@using StudioElf.Module.GitHubConnector.Models
+@using StudioElf.Module.GitHubConnector.Services
+@inherits GitHubConnectorBase
+@inject IGitHubRepositoryService RepositoryService
+@inject IGitHubIssueService IssueService
+
+@* Shared tab component for linking repos to any CRM entity (contact, company, deal). *@
+
+<div class="crm-tab">
+    <h5>GitHub Repositories</h5>
+
+    @if (LinkedRepos.Count == 0 && AvailableRepos.Count == 0)
+    {
+        <p class="text-muted">No repositories tracked yet. Add repositories in the GitHub extension settings first.</p>
+    }
+    else
+    {
+        @if (LinkedRepos.Count > 0)
+        {
+            <h6>Linked Repositories</h6>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Repository</th>
+                        <th>Stars</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var repo in LinkedRepos)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@repo.FullName</strong>
+                                <br /><small class="text-muted">@repo.Description</small>
+                            </td>
+                            <td>@repo.Stars</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger"
+                                        @onclick="() => UnlinkRepoAsync(repo.Id)">
+                                    Unlink
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="text-muted">No GitHub repositories linked to this @EntityType.</p>
+        }
+
+        @if (AvailableRepos.Count > 0)
+        {
+            <hr />
+            <h6>Link a Repository</h6>
+            <div class="input-group mb-2">
+                <select @onchange="OnRepoSelected" class="form-select">
+                    <option value="0">-- Select repository --</option>
+                    @foreach (var repo in AvailableRepos)
+                    {
+                        <option value="@repo.Id">@repo.FullName</option>
+                    }
+                </select>
+                <button class="btn btn-primary" @onclick="LinkRepoAsync" disabled="@(SelectedRepoId == 0 || IsLinking)">
+                    @(IsLinking ? "Linking..." : "Link")
+                </button>
+            </div>
+        }
+    }
+
+    @if (LinkedRepos.Count > 0)
+    {
+        <hr />
+        <h6>Open Issues</h6>
+        @if (_loadingIssues) { <p class="text-muted">Loading issues...</p> }
+        else if (_openIssues.Count == 0) { <p class="text-muted">No open issues.</p> }
+        else
+        {
+            <table class="table table-sm">
+                <thead>
+                    <tr><th>#</th><th>Title</th><th>Repo</th><th>Labels</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var issue in _openIssues)
+                    {
+                        <tr>
+                            <td><code>#@issue.IssueNumber</code></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(issue.HtmlUrl))
+                                {
+                                    <a href="@issue.HtmlUrl" target="_blank" rel="noopener">@issue.Title</a>
+                                }
+                                else { @issue.Title }
+                            </td>
+                            <td><small>@issue.RepositoryName</small></td>
+                            <td><small>@issue.Labels</small></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <div class="alert alert-@(IsError ? "danger" : "success") alert-dismissible fade show mt-2" role="alert">
+            @Message
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>CRM entity type name: "contact", "company", or "deal".</summary>
+    [Parameter] public string EntityType { get; set; } = "contact";
+
+    /// <summary>CRM entity primary key.</summary>
+    [Parameter] public int EntityId { get; set; }
+
+    private List<GitHubRepositoryDto> LinkedRepos { get; set; } = new();
+    private List<GitHubRepositoryDto> AvailableRepos { get; set; } = new();
+    private List<GitHubIssueDto> _openIssues { get; set; } = new();
+    private bool _loadingIssues;
+    private int SelectedRepoId { get; set; }
+    private bool IsLinking;
+    private string? Message;
+    private bool IsError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadDataAsync();
+    }
+
+    private void OnRepoSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id))
+            SelectedRepoId = id;
+        else
+            SelectedRepoId = 0;
+    }
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            var allRepos = await RepositoryService.GetAllAsync(ModuleState.ModuleId);
+            LinkedRepos = await RepositoryService.GetByEntityAsync(EntityType, EntityId, ModuleState.ModuleId);
+            AvailableRepos = allRepos.Where(r => !LinkedRepos.Any(l => l.Id == r.Id)).ToList();
+
+            if (LinkedRepos.Count > 0)
+            {
+                _loadingIssues = true;
+                _openIssues = await IssueService.GetByEntityAsync(EntityType, EntityId, ModuleState.ModuleId);
+                _loadingIssues = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Message = $"Failed to load repositories: {ex.Message}";
+            IsError = true;
+        }
+    }
+
+    private async Task LinkRepoAsync()
+    {
+        if (SelectedRepoId <= 0) return;
+
+        IsLinking = true;
+        Message = null;
+
+        try
+        {
+            var dto = new CreateGitHubRepositoryLinkDto
+            {
+                RepositoryId = SelectedRepoId,
+                EntityType = EntityType,
+                EntityId = EntityId
+            };
+            await RepositoryService.AddLinkAsync(dto, ModuleState.ModuleId, PageState?.User?.Username ?? "system");
+            await LoadDataAsync();
+            SelectedRepoId = 0;
+            Message = "Repository linked.";
+            IsError = false;
+        }
+        catch (Exception ex)
+        {
+            Message = $"Failed to link repository: {ex.Message}";
+            IsError = true;
+        }
+        finally { IsLinking = false; }
+    }
+
+    private async Task UnlinkRepoAsync(int repositoryId)
+    {
+        Message = null;
+        try
+        {
+            var links = await RepositoryService.GetLinksAsync(repositoryId, ModuleState.ModuleId);
+            var link = links.FirstOrDefault(l => l.EntityType == EntityType && l.EntityId == EntityId);
+            if (link != null)
+                await RepositoryService.RemoveLinkAsync(link.Id, ModuleState.ModuleId);
+
+            await LoadDataAsync();
+            Message = "Repository unlinked.";
+            IsError = false;
+        }
+        catch (Exception ex)
+        {
+            Message = $"Failed to unlink repository: {ex.Message}";
+            IsError = true;
+        }
+    }
+}
