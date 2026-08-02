@@ -1,4 +1,4 @@
-# StudioElf CRM GitHub Enterprise Connector
+# StudioElf CRM GitHub Enterprise Connector  
 
 The **StudioElf CRM GitHub Enterprise Connector** is the flagship open source integration extension for [StudioElf CRM](https://crm.studio-elf.net), demonstrating enterprise API integration, synchronization services, webhooks, dashboard widgets, AI enrichment, and Knowledge Graph providers in a real-world solution.
 
@@ -8,6 +8,8 @@ Built on the [StudioElf CRM Extension SDK](https://crm.studio-elf.net/extensions
 - A reference implementation for extension developers
 - A showcase for advanced SDK capabilities
 - A blueprint for future commercial connectors (Microsoft Graph, Azure DevOps, Jira, Teams, SharePoint)
+
+Download and install this package into your Oqtane solution via Module Management. https://crm.studio-elf.net/files/Public/StudioElf.Module.CRM.GitHubConnector.1.0.0.nupkg
 
 ---
 
