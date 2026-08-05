@@ -20,6 +20,7 @@ public class GitHubActionService : IGitHubActionService
     {
         await using var db = await _factory.CreateDbContextAsync();
         return await db.GitHubActionWorkflows.Where(w => w.RepositoryId == repositoryId && w.Repository.ModuleId == moduleId)
+            .Include(w => w.Repository)
             .OrderByDescending(w => w.CreatedAt).Select(w => ToDto(w)).ToListAsync();
     }
 

@@ -43,6 +43,7 @@ public class GitHubReleaseService : IGitHubReleaseService
         await using var db = await _contextFactory.CreateDbContextAsync();
         return await db.GitHubReleases
             .Where(r => r.Repository.ModuleId == moduleId)
+            .Include(r => r.Repository)
             .OrderByDescending(r => r.PublishedAt)
             .Take(count)
             .Select(r => ToDto(r))
@@ -61,6 +62,7 @@ public class GitHubReleaseService : IGitHubReleaseService
 
         return await db.GitHubReleases
             .Where(r => repoIds.Contains(r.RepositoryId) && r.Repository.ModuleId == moduleId)
+            .Include(r => r.Repository)
             .OrderByDescending(r => r.PublishedAt)
             .Take(50)
             .Select(r => ToDto(r))
