@@ -11,6 +11,12 @@
     margin-bottom: 1rem;
 }
 
+.crm-shell .gh-shell-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
 .crm-shell .gh-stats-bar {
     display: flex;
     gap: .75rem;
