@@ -104,4 +104,12 @@ public class GitHubConnectorExtension : ICrmExtension
             return new();
         }
     }
+    public List<string> GetStylesheets() => new()
+    {
+        "_content/StudioElf.Module.CRM.GitHubConnector/GitHubConnector.css"
+    };
+    public List<string> GetScripts() => new()
+    {
+        "_content/StudioElf.Module.CRM.GitHubConnector/interop.js"
+    };
 }

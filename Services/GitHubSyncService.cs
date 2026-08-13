@@ -55,8 +55,8 @@ public class GitHubSyncService : IGitHubSyncService
                 return result;
             }
 
-            // Configure API client with current settings
-            // Note: API client is scoped, configured per-sync-call to pick up setting changes
+            // API client is configured per-call inside the repository/release/issue services
+            // to pick up setting changes (base URL + PAT)
 
             // Sync repositories
             var repoResult = await _repositoryService.SyncAllAsync(moduleId, ct);

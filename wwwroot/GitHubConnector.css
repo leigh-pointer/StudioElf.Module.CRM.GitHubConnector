@@ -1,0 +1,210 @@
+/* GitHub Connector Extension — Component Styles
+   Scoped under .crm-shell to avoid leaking.
+   Uses CRM design tokens (--crm-*) and Bootstrap (--bs-*) exclusively.
+   Dark mode via [data-bs-theme="dark"].
+   No hardcoded color values. */
+
+/* ════════════════════════════════════════
+   SHELL HEADER + STATS BAR
+   ════════════════════════════════════════ */
+.crm-shell .gh-shell-header {
+    margin-bottom: 1rem;
+}
+
+.crm-shell .gh-stats-bar {
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+    margin-top: .75rem;
+}
+
+.crm-shell .gh-stat {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .4rem;
+    padding: .4rem .75rem;
+    background: var(--bs-tertiary-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--crm-radius-sm);
+    font-size: .8rem;
+    color: var(--bs-secondary-color);
+}
+
+.crm-shell .gh-stat-value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--bs-body-color);
+}
+
+/* ════════════════════════════════════════
+   TAB BAR
+   ════════════════════════════════════════ */
+.crm-shell .gh-tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--bs-border-color);
+    margin-bottom: .75rem;
+    flex-wrap: wrap;
+}
+
+.crm-shell .gh-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: .5rem 1rem;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--bs-secondary-color);
+    cursor: pointer;
+    font-size: .875rem;
+    margin-bottom: -1px;
+    transition: color var(--crm-transition), border-color var(--crm-transition);
+    white-space: nowrap;
+}
+
+.crm-shell .gh-tab-btn:hover {
+    color: var(--bs-body-color);
+}
+
+.crm-shell .gh-tab-btn.gh-tab-active {
+    color: var(--crm-primary);
+    border-bottom-color: var(--crm-primary);
+}
+
+/* ════════════════════════════════════════
+   REPOSITORY LIST
+   ════════════════════════════════════════ */
+.crm-shell .gh-repo-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .6rem .75rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--crm-radius-sm);
+    margin-bottom: .5rem;
+    cursor: pointer;
+    transition: background var(--crm-transition);
+    flex-wrap: wrap;
+}
+
+.crm-shell .gh-repo-row:hover {
+    background: rgba(var(--bs-primary-rgb), 0.12);
+}
+
+.crm-shell .gh-repo-main {
+    flex: 1 1 240px;
+    min-width: 0;
+}
+
+.crm-shell .gh-repo-name {
+    display: block;
+    font-weight: 600;
+    color: var(--bs-body-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.crm-shell .gh-repo-meta {
+    display: block;
+    font-size: .75rem;
+    color: var(--bs-secondary-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.crm-shell .gh-repo-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.crm-shell .gh-repo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .15rem .5rem;
+    font-size: .75rem;
+    color: var(--bs-body-color);
+    background: var(--bs-tertiary-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+/* ── Releases panel ── */
+.crm-shell .gh-releases {
+    flex-basis: 100%;
+    margin-top: .5rem;
+    padding-top: .5rem;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+.crm-shell .gh-release-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .3rem 0;
+    flex-wrap: wrap;
+}
+
+.crm-shell .gh-release-tag {
+    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--bs-body-color);
+}
+
+.crm-shell .gh-release-name {
+    flex: 1 1 200px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .85rem;
+    color: var(--bs-body-color);
+}
+
+/* ════════════════════════════════════════
+   WEBHOOK EVENT LIST
+   ════════════════════════════════════════ */
+.crm-shell .gh-webhook-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .5rem .25rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    flex-wrap: wrap;
+}
+
+.crm-shell .gh-webhook-event {
+    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--bs-body-color);
+}
+
+.crm-shell .gh-webhook-repo {
+    flex: 1 1 200px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .8rem;
+    color: var(--bs-secondary-color);
+}
+
+/* ── Add repository form ── */
+.crm-shell .gh-add-form {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .75rem;
+    flex-wrap: wrap;
+}
+
+.crm-shell .gh-add-form .form-control {
+    flex: 1 1 240px;
+    min-width: 0;
+}

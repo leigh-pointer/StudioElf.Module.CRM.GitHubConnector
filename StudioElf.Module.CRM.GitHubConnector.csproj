@@ -29,17 +29,8 @@
 		</Reference>
 	</ItemGroup>
 
-	<Target Name="CopyToOqtane" AfterTargets="Build">
-		<PropertyGroup>
-			<OqtaneBin>..\..\..\oqtane.framework\Oqtane.Server\bin\Debug\net10.0\</OqtaneBin>
-		</PropertyGroup>
-		<ItemGroup>
-			<OutputFiles Include="$(OutputPath)$(AssemblyName).dll;$(OutputPath)$(AssemblyName).pdb" />
-		</ItemGroup>
-		<Copy SourceFiles="@(OutputFiles)" DestinationFolder="$(OqtaneBin)" SkipUnchangedFiles="true" />
-	</Target>
 	<Target Name="PostBuildPackage" AfterTargets="Build">
-		<Exec Condition="'$(Configuration)' == 'Release'"
-			  Command="cd /d $(MSBuildProjectDirectory)\Package &amp; release.cmd $(TargetFramework)" />
+		<Exec Condition="'$(OS)' == 'Windows_NT' And '$(Configuration)' == 'Debug'" Command="&quot;$(MSBuildProjectDirectory)\Package\debug.cmd&quot; PostBuild" />
+		<Exec Condition="'$(OS)' == 'Windows_NT' And '$(Configuration)' == 'Release'" Command="&quot;$(MSBuildProjectDirectory)\Package\release.cmd&quot; $(TargetFramework) PostBuild" />
 	</Target>
 </Project>

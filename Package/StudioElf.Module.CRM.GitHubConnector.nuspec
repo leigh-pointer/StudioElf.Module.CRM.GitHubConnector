@@ -20,5 +20,9 @@
         <file src="..\bin\Release\$targetframework$\$projectname$.Oqtane.dll" target="lib\$targetframework$" />
         <file src="..\bin\Release\$targetframework$\$projectname$.Oqtane.pdb" target="lib\$targetframework$" />
         <file src="icon.png" target="" />
-    </files>
+
+		<!-- Extension static assets -->
+		<file src="..\wwwroot\**\*" exclude="..\wwwroot\_content\**" target="staticwebassets" />
+
+	</files>
 </package>

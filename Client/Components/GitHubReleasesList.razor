@@ -12,40 +12,42 @@
     }
     else
     {
-        <table class="table table-sm table-hover">
-            <thead>
-                <tr>
-                    <th>Version</th>
-                    <th>Repository</th>
-                    <th>Name</th>
-                    <th>Published</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var release in Releases)
-                {
+        <div class="table-responsive">
+            <table class="table table-sm table-hover w-100">
+                <thead>
                     <tr>
-                        <td><code>@release.TagName</code></td>
-                        <td>@release.RepositoryName</td>
-                        <td>@release.ReleaseName</td>
-                        <td>@FormatLocalDate(release.PublishedAt, "g")</td>
-                        <td>
-                            @if (release.IsPrerelease)
-                            {
-                                <span class="badge bg-warning text-dark">Pre-release</span>
-                            }
-                            @if (!string.IsNullOrEmpty(release.Url))
-                            {
-                                <a href="@release.Url" target="_blank" rel="noopener" class="btn btn-sm btn-link">
-                                    View
-                                </a>
-                            }
-                        </td>
+                        <th>Version</th>
+                        <th>Repository</th>
+                        <th>Name</th>
+                        <th>Published</th>
+                        <th></th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var release in Releases)
+                    {
+                        <tr>
+                            <td><code>@release.TagName</code></td>
+                            <td>@release.RepositoryName</td>
+                            <td>@release.ReleaseName</td>
+                            <td>@FormatLocalDate(release.PublishedAt, "g")</td>
+                            <td>
+                                @if (release.IsPrerelease)
+                                {
+                                    <span class="badge bg-warning text-dark">Pre-release</span>
+                                }
+                                @if (!string.IsNullOrEmpty(release.Url))
+                                {
+                                    <a href="@release.Url" target="_blank" rel="noopener" class="btn btn-sm btn-link">
+                                        View
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
 </div>
 

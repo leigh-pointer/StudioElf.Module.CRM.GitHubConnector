@@ -20,33 +20,35 @@
         @if (LinkedRepos.Count > 0)
         {
             <h6>Linked Repositories</h6>
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>Repository</th>
-                        <th>Stars</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var repo in LinkedRepos)
-                    {
+            <div class="table-responsive">
+                <table class="table table-sm w-100">
+                    <thead>
                         <tr>
-                            <td>
-                                <strong>@repo.FullName</strong>
-                                <br /><small class="text-muted">@repo.Description</small>
-                            </td>
-                            <td>@repo.Stars ⭐</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-danger"
-                                        @onclick="() => UnlinkRepoAsync(repo.Id)">
-                                    Unlink
-                                </button>
-                            </td>
+                            <th>Repository</th>
+                            <th>Stars</th>
+                            <th></th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var repo in LinkedRepos)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@repo.FullName</strong>
+                                    <br /><small class="text-muted">@repo.Description</small>
+                                </td>
+                                <td>@repo.Stars ⭐</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            @onclick="() => UnlinkRepoAsync(repo.Id)">
+                                        Unlink
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
         else
         {
@@ -88,36 +90,38 @@
         }
         else
         {
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Title</th>
-                        <th>Repo</th>
-                        <th>Labels</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var issue in _openIssues)
-                    {
+            <div class="table-responsive">
+                <table class="table table-sm w-100">
+                    <thead>
                         <tr>
-                            <td><code>#@issue.IssueNumber</code></td>
-                            <td>
-                                @if (!string.IsNullOrEmpty(issue.HtmlUrl))
-                                {
-                                    <a href="@issue.HtmlUrl" target="_blank" rel="noopener">@issue.Title</a>
-                                }
-                                else
-                                {
-                                    @issue.Title
-                                }
-                            </td>
-                            <td><small>@issue.RepositoryName</small></td>
-                            <td><small>@issue.Labels</small></td>
+                            <th>#</th>
+                            <th>Title</th>
+                            <th>Repo</th>
+                            <th>Labels</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var issue in _openIssues)
+                        {
+                            <tr>
+                                <td><code>#@issue.IssueNumber</code></td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(issue.HtmlUrl))
+                                    {
+                                        <a href="@issue.HtmlUrl" target="_blank" rel="noopener">@issue.Title</a>
+                                    }
+                                    else
+                                    {
+                                        @issue.Title
+                                    }
+                                </td>
+                                <td><small>@issue.RepositoryName</small></td>
+                                <td><small>@issue.Labels</small></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
     }
 

@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Oqtane.Services;
+using Oqtane.Shared;
 using StudioElf.Module.GitHubConnector.Models;
 using StudioElf.Module.GitHubConnector.Repository;
 
@@ -15,6 +17,7 @@ public class GitHubRepositoryService : IGitHubRepositoryService
 {
     private readonly IDbContextFactory<GitHubConnectorContext> _contextFactory;
     private readonly IGitHubApiClient _apiClient;
+    private readonly ISettingService _settingService;
     private readonly ILogger<GitHubRepositoryService> _logger;
 
     /// <summary>
@@ -23,11 +26,25 @@ public class GitHubRepositoryService : IGitHubRepositoryService
     public GitHubRepositoryService(
         IDbContextFactory<GitHubConnectorContext> contextFactory,
         IGitHubApiClient apiClient,
+        ISettingService settingService,
         ILogger<GitHubRepositoryService> logger)
     {
         _contextFactory = contextFactory;
         _apiClient = apiClient;
+        _settingService = settingService;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Applies the module's GitHub settings (base URL + PAT) to the API client.
+    /// The client is transient, so it must be configured before every API call.
+    /// </summary>
+    private async Task ApplySettingsAsync(int moduleId)
+    {
+        var settings = await _settingService.GetSettingsAsync(EntityNames.Module, moduleId);
+        var json = settings.GetValueOrDefault(GitHubSettings.SettingsKey, "{}");
+        var gitHubSettings = JsonSerializer.Deserialize<GitHubSettings>(json) ?? new GitHubSettings();
+        _apiClient.Configure(gitHubSettings.GitHubApiUrl, gitHubSettings.PersonalAccessToken ?? string.Empty);
     }
 
     public async Task<List<GitHubRepositoryDto>> GetAllAsync(int moduleId)
@@ -80,6 +97,7 @@ public class GitHubRepositoryService : IGitHubRepositoryService
         var repo = parts[1].Trim();
 
         // Fetch from GitHub API to validate and get metadata
+        await ApplySettingsAsync(moduleId);
         var json = await _apiClient.GetRepositoryAsync(owner, repo);
         var root = json.RootElement;
 
@@ -250,6 +268,7 @@ public class GitHubRepositoryService : IGitHubRepositoryService
                 if (parts == null || parts.Length != 2)
                     continue;
 
+                await ApplySettingsAsync(moduleId);
                 var json = await _apiClient.GetRepositoryAsync(parts[0], parts[1], ct);
                 var root = json.RootElement;
 
@@ -302,6 +321,7 @@ public class GitHubRepositoryService : IGitHubRepositoryService
             if (parts == null || parts.Length != 2)
                 throw new InvalidOperationException($"Repository '{repo.FullName}' has an invalid full name format.");
 
+            await ApplySettingsAsync(moduleId);
             var json = await _apiClient.GetRepositoryAsync(parts[0], parts[1], ct);
             var root = json.RootElement;
 

@@ -14,40 +14,42 @@
     }
     else
     {
-        <table class="table table-sm table-hover">
-            <thead>
-                <tr>
-                    <th>Repository</th>
-                    <th>Stars</th>
-                    <th>Language</th>
-                    <th>Last Synced</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var repo in Repositories)
-                {
+        <div class="table-responsive">
+            <table class="table table-sm table-hover w-100">
+                <thead>
                     <tr>
-                        <td>
-                            @if (!string.IsNullOrEmpty(repo.Url))
-                            {
-                                <a href="@repo.Url" target="_blank" rel="noopener">
-                                    <strong>@repo.FullName</strong>
-                                </a>
-                            }
-                            else
-                            {
-                                <strong>@repo.FullName</strong>
-                            }
-                            <br />
-                            <small class="text-muted">@repo.Description</small>
-                        </td>
-                        <td>@repo.Stars ⭐</td>
-                        <td>@repo.PrimaryLanguage</td>
-                        <td>@FormatLocalDate(repo.LastSyncedOn, "g")</td>
+                        <th>Repository</th>
+                        <th>Stars</th>
+                        <th>Language</th>
+                        <th>Last Synced</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var repo in Repositories)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(repo.Url))
+                                {
+                                    <a href="@repo.Url" target="_blank" rel="noopener">
+                                        <strong>@repo.FullName</strong>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <strong>@repo.FullName</strong>
+                                }
+                                <br />
+                                <small class="text-muted">@repo.Description</small>
+                            </td>
+                            <td>@repo.Stars ⭐</td>
+                            <td>@repo.PrimaryLanguage</td>
+                            <td>@FormatLocalDate(repo.LastSyncedOn, "g")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
 </div>
 
